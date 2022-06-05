@@ -157,7 +157,7 @@ app.get("/playlist/:id", (req, res) => {
 });
 
 // slanje izazova drugom playeru
-app.put("/duel", (req, res) => {
+app.put("/duel/start", (req, res) => {
   const { body } = req;
   const { playerOneId, playerTwoId, playlist, playerOneScore } = body;
   const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
@@ -245,7 +245,7 @@ app.put("/duel/end", (req, res) => {
 });
 
 // odbijanje izazova drugog playera ili odbacivanje izazova kojeg smo sami postavili drugom playeru
-app.delete("/duel", (req, res) => {
+app.delete("/duel/quit", (req, res) => {
   const { body } = req;
   const { playerOneId, playerTwoId } = body;
 
