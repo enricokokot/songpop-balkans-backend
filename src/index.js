@@ -73,12 +73,15 @@ const songsDetails = [
   },
 ];
 
-// trebala bi biti lista linkova na kratke sampleove pjesama
+// fileovi su trenutno na mom sustavu
 const songsAudio = new Map([
-  [0, "Kap_po_kap.mp3"],
-  [1, "Marija.mp3"],
-  [2, "Sve_jos_mirise_na_nju.mp3"],
-  [3, "Previse_suza_u_mom_pivu.mp3"],
+  [0, "C:\\Users\\ekoko\\Downloads\\Divlje_jagode_-_Kap_po_kap.mp3"],
+  [1, "C:\\Users\\ekoko\\Downloads\\Divlje_jagode_-_Marija.mp3"],
+  [2, "C:\\Users\\ekoko\\Downloads\\Parni_valjak_-_Sve_još_miriše_na_nju.mp3"],
+  [
+    3,
+    "C:\\Users\\ekoko\\Downloads\\Prljavo_kazaliste_-_Previše_suza_u_mom_pivu.mp3",
+  ],
 ]);
 
 const playlists = [
@@ -134,12 +137,11 @@ app.get("/song/:id", (req, res) => {
   res.send(specificSong);
 });
 
-// trebalo bi vracati kratki sample birane pjesme
 app.get("/song/:id/audio", (req, res) => {
   const id = Number(req.params.id);
   const specificSongAudio = songsAudio.get(id);
   res.status(200);
-  res.send(specificSongAudio);
+  res.sendFile(specificSongAudio);
 });
 
 app.get("/playlist", (req, res) => {
