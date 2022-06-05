@@ -159,15 +159,7 @@ app.get("/playlist/:id", (req, res) => {
 // slanje izazova drugom playeru
 app.put("/duel", (req, res) => {
   const { body } = req;
-  const {
-    playerOneId,
-    playerTwoId,
-    playlist,
-    // playerOneGameStatus,
-    // playerTwoGameStatus,
-    playerOneScore,
-    // playerTwoScore,
-  } = body;
+  const { playerOneId, playerTwoId, playlist, playerOneScore } = body;
   const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
   const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
 
@@ -181,7 +173,6 @@ app.put("/duel", (req, res) => {
     users[playerOneIndex].duels.push({
       against: playerTwoId,
       playlist: playlist,
-      //   played: playerOneGameStatus,
       played: 1,
       score: playerOneScore,
     });
@@ -189,9 +180,7 @@ app.put("/duel", (req, res) => {
     users[playerTwoIndex].duels.push({
       against: playerOneId,
       playlist: playlist,
-      //   played: playerTwoGameStatus,
       played: 0,
-      //   score: playerTwoScore,
       score: 0,
     });
 
@@ -263,10 +252,10 @@ app.delete("/duel", (req, res) => {
   const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
   const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
 
-  users[playerOneId].duels = users[playerOneId].duels.filter(
+  users[playerOneIndex].duels = users[playerOneIndex].duels.filter(
     (duel) => duel.against != playerTwoId
   );
-  users[playerTwoId].duels = users[playerTwoId].duels.filter(
+  users[playerTwoIndex].duels = users[playerTwoIndex].duels.filter(
     (duel) => duel.against != playerOneId
   );
 
