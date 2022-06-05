@@ -73,6 +73,7 @@ const songsDetails = [
   },
 ];
 
+// trebala bi biti lista linkova na kratke sampleove pjesama
 const songsAudio = new Map([
   [0, "Kap_po_kap.mp3"],
   [1, "Marija.mp3"],
@@ -133,6 +134,7 @@ app.get("/song/:id", (req, res) => {
   res.send(specificSong);
 });
 
+// trebalo bi vracati kratki sample birane pjesme
 app.get("/song/:id/audio", (req, res) => {
   const id = Number(req.params.id);
   const specificSongAudio = songsAudio.get(id);
