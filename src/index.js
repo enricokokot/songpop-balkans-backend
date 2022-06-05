@@ -113,6 +113,7 @@ app.get("/song/:id/audio", (req, res) => {
   res.send(specificSongAudio);
 });
 
+// slanje izazova drugom playeru
 app.put("/duel", (req, res) => {
   const { body } = req;
   const {
@@ -159,6 +160,7 @@ app.put("/duel", (req, res) => {
   }
 });
 
+// odgovoranje na izazov kojeg je drugi player zapoceo i zavrsetak dvoboja
 app.put("/duel/end", (req, res) => {
   const { body } = req;
   const { playerOneId, playerTwoId, playerOneScore, playerTwoScore } = body;
@@ -207,6 +209,7 @@ app.put("/duel/end", (req, res) => {
   }
 });
 
+// odbijanje izazova drugog playera ili odbacivanje izazova kojeg smo sami postavili drugom playeru
 app.delete("/duel", (req, res) => {
   const { body } = req;
   const { playerOneId, playerTwoId } = body;
