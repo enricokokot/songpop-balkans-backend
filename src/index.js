@@ -1,112 +1,15 @@
 import express from "express";
 import cors from "cors";
+import { users } from "./users";
+import { songsDetails } from "./songsDetails";
+import { songsAudio } from "./songsAudio";
+import { playlists } from "./playlists";
 
 const app = express();
 const port = 3000;
 
 app.use(cors());
 app.use(express.json());
-
-const users = [
-  {
-    id: 0,
-    name: "Dino Merlić",
-    playlists: ["rock", "rap"],
-    duels: [],
-    coins: 43,
-    // medals: ["won 10 games"],
-    "games played": 12,
-    "games won": 7,
-    "games lost": 3,
-    "games tied": 2,
-  },
-  {
-    id: 1,
-    name: "Senka Miletić",
-    playlists: ["rock", "trap"],
-    duels: [{ against: 2, playlist: "rock", played: 1, score: 75 }],
-    coins: 10,
-    // medals: ["won with a perfect score"],
-    "games played": 6,
-    "games won": 2,
-    "games lost": 4,
-    "games tied": 0,
-  },
-  {
-    id: 2,
-    name: "Fedja Sakić",
-    playlists: ["folk", "rap"],
-    duels: [{ against: 1, playlist: "rock", played: 0, score: 0 }],
-    coins: 3,
-    // medals: [],
-    "games played": 3,
-    "games won": 0,
-    "games lost": 3,
-    "games tied": 0,
-  },
-];
-
-const songsDetails = [
-  {
-    id: 0,
-    title: "Kap po kap",
-    artist: "Divlje Jagode",
-    playlist: "rock",
-  },
-  {
-    id: 1,
-    title: "Marija",
-    artist: "Divlje Jagode",
-    playlist: "rock",
-  },
-  {
-    id: 2,
-    title: "Sve još miriše na nju",
-    artist: "Parni valjak",
-    playlist: "rock",
-  },
-  {
-    id: 3,
-    title: "Previše suza u mom pivu",
-    artist: "Prljavo kazalište",
-    playlist: "rock",
-  },
-];
-
-// fileovi su trenutno na mom sustavu
-const songsAudio = new Map([
-  [0, "C:\\Users\\ekoko\\Downloads\\Divlje_jagode_-_Kap_po_kap.mp3"],
-  [1, "C:\\Users\\ekoko\\Downloads\\Divlje_jagode_-_Marija.mp3"],
-  [2, "C:\\Users\\ekoko\\Downloads\\Parni_valjak_-_Sve_još_miriše_na_nju.mp3"],
-  [
-    3,
-    "C:\\Users\\ekoko\\Downloads\\Prljavo_kazaliste_-_Previše_suza_u_mom_pivu.mp3",
-  ],
-]);
-
-const playlists = [
-  {
-    id: 0,
-    title: "rock",
-    details: "All the YU and post-YU rock your heart desires!",
-    price: 25,
-    songs: [0, 1, 2, 3],
-  },
-  {
-    id: 1,
-    title: "folk",
-    details: "For the animal in you here is the best glass-shattering music!",
-    price: 25,
-    songs: [4, 5, 6, 7],
-  },
-  {
-    id: 2,
-    title: "rap",
-    details: "Music from the streets for the streets!",
-    price: 25,
-    songs: [8, 9, 10, 11],
-  },
-];
 
 app.get("/", (req, res) => {
   res.status(200);
