@@ -5,6 +5,7 @@ import { songs } from "./songs";
 import { playlists } from "./playlists";
 import { duels } from "./duels";
 import { friendships } from "./friendships";
+import { achievements } from "./achievements";
 
 const app = express();
 const port = 3000;
@@ -110,6 +111,20 @@ app.delete("/friendship/remove", (req, res) => {
   const { playerOneId, playerTwoId } = req.body;
   res.status(200);
   res.send({ requestCompleted: true });
+});
+
+app.get("/achievement", (req, res) => {
+  res.status(200);
+  res.send(achievements);
+});
+
+app.get("/achievement/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const specificUsersAchievements = achievements.find(
+    (usersAchievements) => usersAchievements.id === id
+  );
+  res.status(200);
+  res.send(specificUsersAchievements);
 });
 
 app.listen(port, () => console.log(`Listening on port ${port}!`));
