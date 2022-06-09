@@ -100,4 +100,16 @@ app.get("/friendship/:id", (req, res) => {
   res.send(specificUsersFriends);
 });
 
+app.post("/friendship/add", (req, res) => {
+  const { playerOneId, playerTwoId } = req.body;
+  res.status(200);
+  res.send({ requestCompleted: true });
+});
+
+app.delete("/friendship/remove", (req, res) => {
+  const { playerOneId, playerTwoId } = req.body;
+  res.status(200);
+  res.send({ requestCompleted: true });
+});
+
 app.listen(port, () => console.log(`Listening on port ${port}!`));
