@@ -35,4 +35,16 @@ export const users = [
     "games lost": 3,
     "games tied": 0,
   },
+  {
+    id: 3,
+    name: "Milan Swarovski",
+    playlists: ["folk"],
+    duels: [],
+    coins: 5,
+    // medals: [],
+    "games played": 2,
+    "games won": 1,
+    "games lost": 3,
+    "games tied": 1,
+  },
 ];

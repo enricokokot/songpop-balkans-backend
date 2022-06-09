@@ -4,6 +4,7 @@ import { users } from "./users";
 import { songsDetails } from "./songsDetails";
 import { songsAudio } from "./songsAudio";
 import { playlists } from "./playlists";
+import { duels } from "./duels";
 
 const app = express();
 const port = 3000;
@@ -59,38 +60,71 @@ app.get("/playlist/:id", (req, res) => {
   res.send(specificPlaylist);
 });
 
-// slanje izazova drugom playeru
-app.put("/duel/start", (req, res) => {
-  const { body } = req;
-  const { playerOneId, playerTwoId, playlist, playerOneScore } = body;
-  const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
-  const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
-
-  if (
-    users[playerOneIndex].duels.find((duel) => duel.against == playerTwoId) &&
-    users[playerTwoIndex].duels.find((duel) => duel.against == playerOneId)
-  ) {
-    res.status(200);
-    res.send({ requestCompleted: false, reason: "Duel already active" });
-  } else {
-    users[playerOneIndex].duels.push({
-      against: playerTwoId,
-      playlist: playlist,
-      played: 1,
-      score: playerOneScore,
-    });
-
-    users[playerTwoIndex].duels.push({
-      against: playerOneId,
-      playlist: playlist,
-      played: 0,
-      score: 0,
-    });
-
-    res.status(200);
-    res.send({ requestCompleted: true });
-  }
+app.get("/duel", (req, res) => {
+  res.status(200);
+  res.send(duels);
 });
+
+// slanje izazova drugom playeru
+app.post(
+  // app.put(
+  "/duel/start",
+  (req, res) => {
+    const { body } = req;
+    const { playerOneId, playerTwoId, playlist, playerOneScore } = body;
+    if (
+      !duels.find(
+        (duel) =>
+          duel.id == String(playerOneId) + String(playerTwoId) ||
+          duel.id == String(playerTwoId) + String(playerOneId)
+      ) &&
+      playerOneId != playerTwoId &&
+      users.find((user) => user.id == playerOneId) &&
+      users.find((user) => user.id == playerTwoId)
+    ) {
+      duels.push({
+        id: String(playerOneId) + String(playerTwoId),
+        challengerId: playerOneId,
+        challengeTakerId: playerTwoId,
+        playlist: playlists.find(
+          (givenPlaylist) => givenPlaylist.title == playlist
+        ).id,
+        challengerScore: Number(playerOneScore),
+        challengeTakerScore: 0,
+      });
+
+      res.status(200);
+      res.send({ requestCompleted: true });
+    } else {
+      res.status(200);
+      res.send({ requestCompleted: false });
+    }
+    // const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
+    // const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
+
+    // if (
+    //   users[playerOneIndex].duels.find((duel) => duel.against == playerTwoId) &&
+    //   users[playerTwoIndex].duels.find((duel) => duel.against == playerOneId)
+    // ) {
+    //   res.status(200);
+    //   res.send({ requestCompleted: false, reason: "Duel already active" });
+    // } else {
+    //   users[playerOneIndex].duels.push({
+    //     against: playerTwoId,
+    //     playlist: playlist,
+    //     played: 1,
+    //     score: playerOneScore,
+    //   });
+
+    //   users[playerTwoIndex].duels.push({
+    //     against: playerOneId,
+    //     playlist: playlist,
+    //     played: 0,
+    //     score: 0,
+    //   });
+  }
+  /*}*/
+);
 
 // odgovoranje na izazov kojeg je drugi player zapoceo i zavrsetak dvoboja
 app.put("/duel/end", (req, res) => {
@@ -147,23 +181,29 @@ app.put("/duel/end", (req, res) => {
   }
 });
 
-// odbijanje izazova drugog playera ili odbacivanje izazova kojeg smo sami postavili drugom playeru
+// odbijanje izazova drugog playera ili odbacivanje izazova koji smo sami postavili
 app.delete("/duel/quit", (req, res) => {
   const { body } = req;
   const { playerOneId, playerTwoId } = body;
 
-  const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
-  const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
-
-  users[playerOneIndex].duels = users[playerOneIndex].duels.filter(
-    (duel) => duel.against != playerTwoId
-  );
-  users[playerTwoIndex].duels = users[playerTwoIndex].duels.filter(
-    (duel) => duel.against != playerOneId
-  );
+  duels = duels
+    .filter((duel) => duel.id == String(playerOneId) + String(playerTwoId))
+    .filter((duel) => duel.id == String(playerTwoId) + String(playerOneId));
 
   res.status(200);
   res.send("OK");
+  // const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
+  // const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
+
+  // users[playerOneIndex].duels = users[playerOneIndex].duels.filter(
+  //   (duel) => duel.against != playerTwoId
+  // );
+  // users[playerTwoIndex].duels = users[playerTwoIndex].duels.filter(
+  //   (duel) => duel.against != playerOneId
+  // );
+
+  // res.status(200);
+  // res.send("OK");
 });
 
 app.put("/shop/playlist", (req, res) => {
