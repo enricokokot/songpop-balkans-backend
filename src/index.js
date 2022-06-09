@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { users } from "./users";
-import { songs } from "./songsDetails";
+import { songs } from "./songs";
 import { playlists } from "./playlists";
 import { duels } from "./duels";
 import { friendships } from "./friendships";
