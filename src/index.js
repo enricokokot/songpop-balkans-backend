@@ -128,57 +128,55 @@ app.post(
 
 // odgovoranje na izazov kojeg je drugi player zapoceo i zavrsetak dvoboja
 app.put("/duel/end", (req, res) => {
-  const { body } = req;
-  const { playerOneId, playerTwoId, playerOneScore, playerTwoScore } = body;
-  const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
-  const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
+  const { duelId, chalengeeScore } = req.body;
+  const duel = duels.find((duel) => duel.id == duelId);
+  duel.challengeTakerScore = Number(chalengeeScore);
+  const {
+    challengerId,
+    challengeTakerId,
+    challengerScore,
+    challengeTakerScore,
+  } = duel;
 
-  if (playerOneScore > playerTwoScore) {
-    users[playerOneIndex]["games played"] += 1;
-    users[playerOneIndex]["games won"] += 1;
-    users[playerOneIndex].coins += 3;
-    users[playerOneIndex].duels = users[playerOneIndex].duels.filter(
-      (duel) => duel.against == playerTwoId
-    );
-    users[playerTwoIndex]["games played"] += 1;
-    users[playerTwoIndex]["games lost"] += 1;
-    users[playerTwoIndex].coins += 1;
-    users[playerTwoIndex].duels = users[playerTwoIndex].duels.filter(
-      (duel) => duel.against == playerOneId
-    );
-    res.status(200);
-    res.send({ winner: playerOneId });
-  } else if (playerOneScore < playerTwoScore) {
-    users[playerTwoIndex]["games played"] += 1;
-    users[playerTwoIndex]["games won"] += 1;
-    users[playerTwoIndex].coins += 3;
-    users[playerTwoIndex].duels = users[playerTwoIndex].duels.filter(
-      (duel) => duel.against == playerOneId
-    );
-    users[playerOneIndex]["games played"] += 1;
-    users[playerOneIndex]["games lost"] += 1;
-    users[playerOneIndex].coins += 1;
-    users[playerOneIndex].duels = users[playerOneIndex].duels.filter(
-      (duel) => duel.against == playerTwoId
-    );
-    res.status(200);
-    res.send({ winner: playerTwoId });
+  const winnerId =
+    challengerScore == challengeTakerScore
+      ? undefined
+      : challengerScore > challengeTakerScore
+      ? challengerId
+      : challengeTakerId;
+
+  if (winnerId) {
+    const loserId = winnerId == challengerId ? challengeTakerId : challengerId;
+    const winnerUser = users.find((user) => user.id == winnerId);
+    const loserUser = users.find((user) => user.id == loserId);
+
+    winnerUser["games played"] += 1;
+    winnerUser["games won"] += 1;
+    winnerUser.coins += 3;
+
+    loserUser["games played"] += 1;
+    loserUser["games lost"] += 1;
+    loserUser.coins += 1;
   } else {
-    users[playerOneIndex]["games played"] += 1;
-    users[playerOneIndex]["games tied"] += 1;
-    users[playerOneIndex].coins += 2;
-    users[playerOneIndex].duels = users[playerOneIndex].duels.filter(
-      (duel) => duel.against == playerTwoId
-    );
-    users[playerTwoIndex]["games played"] += 1;
-    users[playerTwoIndex]["games tied"] += 1;
-    users[playerTwoIndex].coins += 2;
-    users[playerTwoIndex].duels = users[playerTwoIndex].duels.filter(
-      (duel) => duel.against == playerOneId
-    );
-    res.status(200);
-    res.send("It's a tie!");
+    const user1 = users.find((user) => user.id == challengerId);
+    const user2 = users.find((user) => user.id == challengeTakerId);
+
+    user1["games played"] += 1;
+    user1["games tied"] += 1;
+    user1.coins += 2;
+
+    user2["games played"] += 1;
+    user2["games tied"] += 1;
+    user2.coins += 2;
   }
+
+  const indexOfDuelToBeDeleted = duels.findIndex(
+    (thisDuel) => thisDuel.id == duelId
+  );
+  duels.splice(indexOfDuelToBeDeleted, 1);
+
+  res.status(200);
+  res.send({ winner: winnerId });
 });
 
 // odbijanje izazova drugog playera ili odbacivanje izazova koji smo sami postavili
