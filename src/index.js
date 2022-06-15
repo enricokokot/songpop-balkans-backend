@@ -1,8 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { users } from "./users";
-import { songsDetails } from "./songsDetails";
-import { songsAudio } from "./songsAudio";
+import { songs } from "./songs";
 import { playlists } from "./playlists";
 import { duels } from "./duels";
 
@@ -31,19 +30,19 @@ app.get("/user/:id", (req, res) => {
 
 app.get("/song", (req, res) => {
   res.status(200);
-  res.send(songsDetails);
+  res.send(songs);
 });
 
 app.get("/song/:id", (req, res) => {
   const id = Number(req.params.id);
-  const specificSong = songsDetails.find((song) => song.id === id);
+  const specificSong = songs.find((song) => song.id === id);
   res.status(200);
   res.send(specificSong);
 });
 
 app.get("/song/:id/audio", (req, res) => {
   const id = Number(req.params.id);
-  const specificSongAudio = songsAudio.get(id);
+  const specificSongAudio = songs.find((song) => song.id === id).file;
   res.status(200);
   res.sendFile(specificSongAudio);
 });
