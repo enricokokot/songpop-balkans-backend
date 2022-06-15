@@ -99,31 +99,7 @@ app.post(
       res.status(200);
       res.send({ requestCompleted: false });
     }
-    // const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
-    // const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
-
-    // if (
-    //   users[playerOneIndex].duels.find((duel) => duel.against == playerTwoId) &&
-    //   users[playerTwoIndex].duels.find((duel) => duel.against == playerOneId)
-    // ) {
-    //   res.status(200);
-    //   res.send({ requestCompleted: false, reason: "Duel already active" });
-    // } else {
-    //   users[playerOneIndex].duels.push({
-    //     against: playerTwoId,
-    //     playlist: playlist,
-    //     played: 1,
-    //     score: playerOneScore,
-    //   });
-
-    //   users[playerTwoIndex].duels.push({
-    //     against: playerOneId,
-    //     playlist: playlist,
-    //     played: 0,
-    //     score: 0,
-    //   });
   }
-  /*}*/
 );
 
 // odgovoranje na izazov kojeg je drugi player zapoceo i zavrsetak dvoboja
@@ -185,7 +161,7 @@ app.delete("/duel/quit", (req, res) => {
   const indexOfDuelToBeDeleted = duels.findIndex((duel) => duel.id == duelId);
   duels.splice(indexOfDuelToBeDeleted, 1);
   res.status(200);
-  res.send("OK");
+  res.send({ requestCompleted: true });
 });
 
 app.put("/shop/playlist", (req, res) => {
