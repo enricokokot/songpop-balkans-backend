@@ -71,25 +71,25 @@ app.post(
   "/duel/start",
   (req, res) => {
     const { body } = req;
-    const { playerOneId, playerTwoId, playlist, playerOneScore } = body;
+    const { challengerId, challengeTakerId, playlist, challengerScore } = body;
     if (
       !duels.find(
         (duel) =>
-          duel.id == String(playerOneId) + String(playerTwoId) ||
-          duel.id == String(playerTwoId) + String(playerOneId)
+          duel.id == String(challengerId) + String(challengeTakerId) ||
+          duel.id == String(challengeTakerId) + String(challengerId)
       ) &&
-      playerOneId != playerTwoId &&
-      users.find((user) => user.id == playerOneId) &&
-      users.find((user) => user.id == playerTwoId)
+      challengerId != challengeTakerId &&
+      users.find((user) => user.id == challengerId) &&
+      users.find((user) => user.id == challengeTakerId)
     ) {
       duels.push({
-        id: String(playerOneId) + String(playerTwoId),
-        challengerId: playerOneId,
-        challengeTakerId: playerTwoId,
+        id: String(challengerId) + String(challengeTakerId),
+        challengerId,
+        challengeTakerId,
         playlist: playlists.find(
           (givenPlaylist) => givenPlaylist.title == playlist
         ).id,
-        challengerScore: Number(playerOneScore),
+        challengerScore: Number(challengerScore),
         challengeTakerScore: 0,
       });
 
