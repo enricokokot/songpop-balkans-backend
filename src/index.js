@@ -183,27 +183,11 @@ app.put("/duel/end", (req, res) => {
 
 // odbijanje izazova drugog playera ili odbacivanje izazova koji smo sami postavili
 app.delete("/duel/quit", (req, res) => {
-  const { body } = req;
-  const { playerOneId, playerTwoId } = body;
-
-  duels = duels
-    .filter((duel) => duel.id == String(playerOneId) + String(playerTwoId))
-    .filter((duel) => duel.id == String(playerTwoId) + String(playerOneId));
-
+  const { duelId } = req.body;
+  const indexOfDuelToBeDeleted = duels.findIndex((duel) => duel.id == duelId);
+  duels.splice(indexOfDuelToBeDeleted, 1);
   res.status(200);
   res.send("OK");
-  // const playerOneIndex = users.findIndex((user) => user.id == playerOneId);
-  // const playerTwoIndex = users.findIndex((user) => user.id == playerTwoId);
-
-  // users[playerOneIndex].duels = users[playerOneIndex].duels.filter(
-  //   (duel) => duel.against != playerTwoId
-  // );
-  // users[playerTwoIndex].duels = users[playerTwoIndex].duels.filter(
-  //   (duel) => duel.against != playerOneId
-  // );
-
-  // res.status(200);
-  // res.send("OK");
 });
 
 app.put("/shop/playlist", (req, res) => {
