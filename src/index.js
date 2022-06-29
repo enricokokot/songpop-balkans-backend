@@ -64,6 +64,25 @@ app.get("/duel", (req, res) => {
   res.send(duels);
 });
 
+app.get("/duel/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const specificPlayerDuelIds = users.find((user) => user.id === id).duels;
+  const specificPlayerDuels = duels.filter((duel) =>
+    specificPlayerDuelIds.includes(duel.id)
+  );
+  const specificPlayerDuelsWhereHeIsTheChallenger = specificPlayerDuels.filter(
+    (duel) => duel.challengerId === id
+  );
+  const specificPlayerDuelsWhereHeIsBeingChallenged =
+    specificPlayerDuels.filter((duel) => duel.challengerId !== id);
+  const specificPlayerDuelsDivided = {
+    specificPlayerDuelsWhereHeIsTheChallenger,
+    specificPlayerDuelsWhereHeIsBeingChallenged,
+  };
+  res.status(200);
+  res.send(specificPlayerDuelsDivided);
+});
+
 // slanje izazova drugom playeru
 app.post(
   // app.put(
