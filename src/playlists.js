@@ -4,7 +4,7 @@ export const playlists = [
     title: "Rock",
     details: "All the YU and post-YU rock your heart desires!",
     price: 25,
-    songs: [0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19],
+    songs: [0, 1, 2, 3, 12, 13, 14, 15, 16, 17, 18, 19, 29, 30],
   },
   {
     id: 1,
