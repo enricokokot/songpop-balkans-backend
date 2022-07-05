@@ -1,10 +1,11 @@
 import express from "express";
 import cors from "cors";
-import { users } from "./users";
-import { songs } from "./songs";
-import { playlists } from "./playlists";
-import { duels } from "./duels";
-import { rivalries } from "./rivalries";
+import fs from "fs";
+import assert from "assert";
+import connect from "./db.js";
+import { songs } from "./songs.js";
+import { GridFSBucket } from "mongodb";
+import { resolve } from "path";
 
 const app = express();
 const port = 3000;
@@ -17,53 +18,133 @@ app.get("/", (req, res) => {
   res.send("Home");
 });
 
-app.get("/user", (req, res) => {
-  res.status(200);
-  res.send(users);
+app.get("/user", async (req, res) => {
+  let db = await connect();
+  let cursor = await db.collection("users").find();
+  let results = await cursor.toArray();
+  res.json(results);
 });
 
-app.get("/user/:id", (req, res) => {
+app.get("/user/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const specificUser = users.find((user) => user.id === id);
-  res.status(200);
-  res.send(specificUser);
+  let db = await connect();
+  let specificUser = await db.collection("users").findOne({ id: id });
+  res.json(specificUser);
 });
 
-app.get("/user/:id/coin", (req, res) => {
+app.get("/user/:id/coin", async (req, res) => {
   const id = Number(req.params.id);
-  const specificUser = users.find((user) => user.id === id);
+  let db = await connect();
+  let specificUser = await db.collection("users").findOne({ id: id });
   const specificUserCoin = specificUser.coins;
   res.status(200);
   res.send({ availableCoins: specificUserCoin });
 });
 
-app.get("/user/:id/playlist", (req, res) => {
+app.get("/user/:id/playlist", async (req, res) => {
   const id = Number(req.params.id);
-  const specificUser = users.find((user) => user.id === id);
+  let db = await connect();
+  let specificUser = await db.collection("users").findOne({ id: id });
   const specificUserPlaylists = specificUser.playlists;
   res.status(200);
   res.send(specificUserPlaylists);
 });
 
-app.get("/user/:id/achievement", (req, res) => {
+app.get("/user/:id/achievement", async (req, res) => {
   const id = Number(req.params.id);
-  const specificUser = users.find((user) => user.id === id);
+  let db = await connect();
+  let specificUser = await db.collection("users").findOne({ id: id });
   const specificUserAchievements = specificUser.achievements;
   res.status(200);
   res.send(specificUserAchievements);
 });
 
-app.patch("/user/:userId/achievement/:achievementId", (req, res) => {
+app.patch("/user/:userId/achievement/:achievementId", async (req, res) => {
   const userId = Number(req.params.userId);
   const achievementId = Number(req.params.achievementId);
-  const specificUser = users.find((user) => user.id === userId);
+  let db = await connect();
+  let specificUser = await db.collection("users").findOne({ id: userId });
   const specificUserAchievements = specificUser.achievements;
   const specificUserAchievement = specificUserAchievements.find(
     (achievement) => achievement.id === achievementId
   );
   if (specificUserAchievement.progress < specificUserAchievement.total) {
-    specificUserAchievement.progress = specificUserAchievement.progress + 1;
-    if (specificUserAchievement.progress === specificUserAchievement.total) {
+    let achievementAchieved = false;
+    if (achievementId === 0) {
+      let achievementAction = await db
+        .collection("users")
+        .updateOne({ id: userId }, { $inc: { "achievements.0.progress": 1 } });
+      let achievementAction2 = await db
+        .collection("users")
+        .findOne({ id: userId });
+      if (
+        achievementAction2.achievements[0].progress ===
+        achievementAction2.achievements[0].total
+      )
+        achievementAchieved = true;
+    } else if (achievementId === 1) {
+      let achievementAction = await db
+        .collection("users")
+        .updateOne({ id: userId }, { $inc: { "achievements.1.progress": 1 } });
+      let achievementAction2 = await db
+        .collection("users")
+        .findOne({ id: userId });
+      if (
+        achievementAction2.achievements[1].progress ===
+        achievementAction2.achievements[1].total
+      )
+        achievementAchieved = true;
+    } else if (achievementId === 2) {
+      let achievementAction = await db
+        .collection("users")
+        .updateOne({ id: userId }, { $inc: { "achievements.2.progress": 1 } });
+      let achievementAction2 = await db
+        .collection("users")
+        .findOne({ id: userId });
+      if (
+        achievementAction2.achievements[2].progress ===
+        achievementAction2.achievements[2].total
+      )
+        achievementAchieved = true;
+    } else if (achievementId === 3) {
+      let achievementAction = await db
+        .collection("users")
+        .updateOne({ id: userId }, { $inc: { "achievements.3.progress": 1 } });
+      let achievementAction2 = await db
+        .collection("users")
+        .findOne({ id: userId });
+      if (
+        achievementAction2.achievements[3].progress ===
+        achievementAction2.achievements[3].total
+      )
+        achievementAchieved = true;
+    } else if (achievementId === 4) {
+      let achievementAction = await db
+        .collection("users")
+        .updateOne({ id: userId }, { $inc: { "achievements.4.progress": 1 } });
+      let achievementAction2 = await db
+        .collection("users")
+        .findOne({ id: userId });
+      if (
+        achievementAction2.achievements[4].progress ===
+        achievementAction2.achievements[4].total
+      )
+        achievementAchieved = true;
+    } else if (achievementId === 5) {
+      let achievementAction = await db
+        .collection("users")
+        .updateOne({ id: userId }, { $inc: { "achievements.5.progress": 1 } });
+      let achievementAction2 = await db
+        .collection("users")
+        .findOne({ id: userId });
+      if (
+        achievementAction2.achievements[5].progress ===
+        achievementAction2.achievements[5].total
+      )
+        achievementAchieved = true;
+    }
+
+    if (achievementAchieved) {
       res.status(200);
       res.send({ goalReached: true });
     } else {
@@ -76,46 +157,133 @@ app.patch("/user/:userId/achievement/:achievementId", (req, res) => {
   }
 });
 
-app.get("/song", (req, res) => {
+// upload pjesama sa lokalnog storage-a na mongo
+app.post("/song", async (req, res) => {
+  let db = await connect();
+  songs.forEach((song) => {
+    let songUploadResult = db.collection("songs").insertOne({
+      id: song.id,
+      title: song.title,
+      artist: song.artist,
+      playlist: song.playlist,
+      file: song.file.slice(73),
+    });
+  });
   res.status(200);
-  res.send(songs);
+  res.send("Songs uploaded successfully!");
 });
 
-app.get("/song/:id", (req, res) => {
+app.get("/song", async (req, res) => {
+  let db = await connect();
+  let cursor = await db.collection("songs").find();
+  let results = await cursor.toArray();
+  res.json(results);
+});
+
+// upload specifične pjesme sa lokalnog storage-a na mongo
+app.post("/song/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const specificSong = songs.find((song) => song.id === id);
+  let db = await connect();
+  const songToBeUploaded = songs.find((song) => song.id === id);
+  let songUploadResult = await db.collection("songs").insertOne({
+    id: songToBeUploaded.id,
+    title: songToBeUploaded.title,
+    artist: songToBeUploaded.artist,
+    playlist: songToBeUploaded.playlist,
+    file: songToBeUploaded.file.slice(73),
+  });
   res.status(200);
-  res.send(specificSong);
+  res.send("Songs uploaded successfully!");
 });
 
-app.get("/song/:id/audio", (req, res) => {
+app.get("/song/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const specificSongAudio = songs.find((song) => song.id === id).file;
-  res.status(200);
-  res.sendFile(specificSongAudio);
+  let db = await connect();
+  let cursor = await db.collection("songs").findOne({ id: id });
+  let results = await cursor.toArray();
+  res.json(results);
 });
 
-app.get("/playlist", (req, res) => {
-  res.status(200);
-  res.send(playlists);
-});
-
-app.get("/playlist/:id", (req, res) => {
+app.get("/song/:id/audio", async (req, res) => {
   const id = Number(req.params.id);
-  const specificPlaylist = playlists.find((playlist) => playlist.id === id);
+  let db = await connect();
+  let bucket = new GridFSBucket(db);
+  let specificSong = await db.collection("songs").findOne({ id: id });
+  if (specificSong.file) {
+    const songAudioName = specificSong.file;
+    bucket
+      .openDownloadStreamByName(songAudioName)
+      .pipe(fs.createWriteStream("./output.mp3"))
+      .on("error", function (error) {
+        assert.ifError(error);
+      })
+      .on("finish", function () {
+        console.log("File downloaded!");
+      });
+    res.status(200);
+    setTimeout(() => res.download(resolve("./output.mp3")), 1000);
+  } else {
+    res.status(200);
+    res.send("Song audio missing");
+  }
+});
+
+// upload audio file-a sa lokalne mašine na mongo
+app.post("/song/:id/audio", async (req, res) => {
+  const id = Number(req.params.id);
+  if (songs.find((song) => song.id === id)) {
+    const song = songs.find((song) => song.id === id);
+    const songAudioLocation = song.file;
+    const songAudioName = songAudioLocation.slice(73);
+    let db = await connect();
+    let bucket = new GridFSBucket(db);
+    fs.createReadStream(songAudioLocation)
+      .pipe(bucket.openUploadStream(songAudioName))
+      .on("error", function (error) {
+        assert.ifError(error);
+      })
+      .on("finish", function () {
+        console.log("File uploaded!");
+      });
+    res.status(200);
+    res.send(songAudioName);
+  } else {
+    res.status(200);
+    res.send("No song with that id");
+  }
+});
+
+app.get("/playlist", async (req, res) => {
+  let db = await connect();
+  let cursor = await db.collection("playlists").find();
+  let results = await cursor.toArray();
+  res.json(results);
+});
+
+app.get("/playlist/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  let db = await connect();
+  const specificPlaylist = await db.collection("playlists").findOne({ id: id });
   res.status(200);
   res.send(specificPlaylist);
 });
 
-app.get("/duel", (req, res) => {
-  res.status(200);
-  res.send(duels);
+app.get("/duel", async (req, res) => {
+  let db = await connect();
+  let cursor = await db.collection("duels").find();
+  let results = await cursor.toArray();
+  res.json(results);
 });
 
-app.get("/duel/:id", (req, res) => {
+app.get("/duel/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const specificPlayerDuelIds = users.find((user) => user.id === id).duels;
-  const specificPlayerDuels = duels.filter((duel) =>
+  let db = await connect();
+  let cursor = await db.collection("duels").find();
+  let specificUser = await db.collection("users").findOne({ id: id });
+  const specificPlayerDuelIds = specificUser.duels;
+  const allDuels = await cursor.toArray();
+
+  const specificPlayerDuels = allDuels.filter((duel) =>
     specificPlayerDuelIds.includes(duel.id)
   );
   const specificPlayerDuelsWhereHeIsTheChallenger = specificPlayerDuels.filter(
@@ -135,8 +303,7 @@ app.get("/duel/:id", (req, res) => {
 app.post(
   // app.put(
   "/duel/start",
-  (req, res) => {
-    // const { body } = req;
+  async (req, res) => {
     const {
       challengerId,
       challengeTakerId,
@@ -144,18 +311,13 @@ app.post(
       challengerScore,
       roundsData,
     } = req.body;
-    // if (
-    //   !duels.find(
-    //     (duel) =>
-    //       duel.id == String(challengerId) + String(challengeTakerId) ||
-    //       duel.id == String(challengeTakerId) + String(challengerId)
-    //   ) &&
-    //   challengerId != challengeTakerId &&
-    //   users.find((user) => user.id == challengerId) &&
-    //   users.find((user) => user.id == challengeTakerId)
-    // ) {
+
+    let db = await connect();
+    let cursor = await db.collection("duels").find();
+    const allDuels = await cursor.toArray();
+
     if (
-      duels.find(
+      allDuels.find(
         (duel) =>
           (duel.challengerId === challengerId &&
             duel.challengeTakerId === challengeTakerId) ||
@@ -179,15 +341,17 @@ app.post(
         })["answer"];
       });
 
-      duels.push({
+      const thePlaylist = await db
+        .collection("playlists")
+        .findOne({ title: playlist });
+
+      let result = await db.collection("duels").insertOne({
         id: duelId,
         playerOneId: challengerId,
         playerTwoId: challengeTakerId,
         challengerId,
         challengeTakerId,
-        playlist: playlists.find(
-          (givenPlaylist) => givenPlaylist.title == playlist
-        ).id,
+        playlist: thePlaylist,
         challengerScore: Number(challengerScore),
         challengeTakerScore: 0,
         playerOneTotalScore: 0,
@@ -195,8 +359,28 @@ app.post(
         rounds: roundsData,
       });
 
-      users.find((user) => user.id === challengerId).duels.push(duelId);
-      users.find((user) => user.id === challengeTakerId).duels.push(duelId);
+      let challengerUser = await db
+        .collection("users")
+        .findOne({ id: challengerId });
+      let newChallengerUser = challengerUser.duels.push(duelId);
+      let newChallengerUserDuels = challengerUser.duels;
+      let challengerUserResult = await db
+        .collection("users")
+        .updateOne(
+          { id: challengerId },
+          { $set: { duels: newChallengerUserDuels } }
+        );
+      let challengeTakerUser = await db
+        .collection("users")
+        .findOne({ id: challengeTakerId });
+      let newChallengeTakerUser = challengeTakerUser.duels.push(duelId);
+      let newChallengeTakerUserDuels = challengeTakerUser.duels;
+      let challengeTakerUserResult = await db
+        .collection("users")
+        .updateOne(
+          { id: challengeTakerId },
+          { $set: { duels: newChallengeTakerUserDuels } }
+        );
 
       res.status(200);
       res.send({ requestCompleted: true });
@@ -205,9 +389,10 @@ app.post(
 );
 
 // odgovoranje na izazov kojeg je drugi player zapoceo i zavrsetak dvoboja
-app.put("/duel/end", (req, res) => {
+app.put("/duel/end", async (req, res) => {
   const { duelId, chalengeeScore } = req.body;
-  const duel = duels.find((duel) => duel.id == duelId);
+  let db = await connect();
+  let duel = await db.collection("duels").findOne({ id: duelId });
   duel.challengeTakerScore = Number(chalengeeScore);
   const {
     challengerId,
@@ -223,9 +408,6 @@ app.put("/duel/end", (req, res) => {
       ? challengerId
       : challengeTakerId;
 
-  console.log("winnerId");
-  console.log(winnerId);
-
   const idsSortedByOrder =
     challengerId < challengeTakerId
       ? [challengerId, challengeTakerId]
@@ -235,102 +417,110 @@ app.put("/duel/end", (req, res) => {
   const biggerId = idsSortedByOrder[1];
 
   if (
-    !rivalries.find(
-      (rivalry) =>
-        rivalry.playerOneId === smallerId && rivalry.playerTwoId === biggerId
-    )
+    !(await db
+      .collection("rivalries")
+      .findOne({ playerOneId: smallerId, playerTwoId: biggerId }))
   ) {
-    rivalries.push({
-      id: rivalries.length,
+    db.collection("rivalries").insertOne({
       playerOneId: smallerId,
       playerTwoId: biggerId,
       playerOneScore: 0,
       playerTwoScore: 0,
     });
   }
-  const particularRivalry = rivalries.find(
-    (rivalry) =>
-      rivalry.playerOneId === smallerId && rivalry.playerTwoId === biggerId
-  );
-
-  console.log("STAGE 1");
-  console.log(particularRivalry);
 
   if (winnerId || winnerId === 0) {
     const loserId = winnerId == challengerId ? challengeTakerId : challengerId;
-    const winnerUser = users.find((user) => user.id == winnerId);
-    const loserUser = users.find((user) => user.id == loserId);
+    let winnerUser = await db.collection("users").findOne({ id: winnerId });
+    let loserUser = await db.collection("users").findOne({ id: loserId });
 
-    winnerUser["games played"] += 1;
-    winnerUser["games won"] += 1;
-    winnerUser.coins += 3;
+    let winnerUserResult1 = await db
+      .collection("users")
+      .updateOne({ id: winnerId }, { $inc: { "games played": 1 } });
+    let winnerUserResult2 = await db
+      .collection("users")
+      .updateOne({ id: winnerId }, { $inc: { "games won": 1 } });
+    let winnerUserResult3 = await db
+      .collection("users")
+      .updateOne({ id: winnerId }, { $inc: { coins: 3 } });
 
-    loserUser["games played"] += 1;
-    loserUser["games lost"] += 1;
-    loserUser.coins += 1;
+    let loserUserResult1 = await db
+      .collection("users")
+      .updateOne({ id: loserId }, { $inc: { "games played": 1 } });
+    let loserUserResult2 = await db
+      .collection("users")
+      .updateOne({ id: loserId }, { $inc: { "games lost": 1 } });
+    let loserUserResult3 = await db
+      .collection("users")
+      .updateOne({ id: loserId }, { $inc: { coins: 1 } });
 
     winnerId > loserId
-      ? (particularRivalry.playerTwoScore += 1)
-      : (particularRivalry.playerOneScore += 1);
-
-    console.log("STAGE 2");
-    console.log(particularRivalry);
+      ? db
+          .collection("rivalries")
+          .updateOne(
+            { playerOneId: smallerId, playerTwoId: biggerId },
+            { $inc: { playerTwoScore: 1 } }
+          )
+      : db
+          .collection("rivalries")
+          .updateOne(
+            { playerOneId: smallerId, playerTwoId: biggerId },
+            { $inc: { playerOneScore: 1 } }
+          );
   } else {
-    const user1 = users.find((user) => user.id == challengerId);
-    const user2 = users.find((user) => user.id == challengeTakerId);
+    let challengerResult = await db
+      .collection("users")
+      .updateOne(
+        { id: challengerId },
+        { $inc: { "games played": 1, "games tied": 1, coins: 2 } }
+      );
+    let challengeTakerResult = await db
+      .collection("users")
+      .updateOne(
+        { id: challengeTakerId },
+        { $inc: { "games played": 1, "games tied": 1, coins: 2 } }
+      );
 
-    user1["games played"] += 1;
-    user1["games tied"] += 1;
-    user1.coins += 2;
-
-    user2["games played"] += 1;
-    user2["games tied"] += 1;
-    user2.coins += 2;
-
-    particularRivalry.playerOneScore += 1;
-    particularRivalry.playerTwoScore += 1;
-
-    console.log("STAGE 3");
-    console.log(particularRivalry);
+    db.collection("rivalries").updateOne(
+      { playerOneId: smallerId, playerTwoId: biggerId },
+      { $inc: { playerOneScore: 1, playerTwoScore: 1 } }
+    );
   }
 
-  const indexOfDuelToBeDeleted = duels.findIndex(
-    (thisDuel) => thisDuel.id == duelId
-  );
-  duels.splice(indexOfDuelToBeDeleted, 1);
+  let duelToRemove = await db
+    .collection("duels")
+    .findOneAndDelete({ id: duelId });
 
-  const duelsOfChallenger = users.find((user) => user.id == challengerId).duels;
-  const duelsOfChallengeTaker = users.find(
-    (user) => user.id == challengeTakerId
-  ).duels;
-
-  const indexOfDuelToBeDeletedInChallenger = duelsOfChallenger.findIndex(
-    (duel) => duel == duelId
-  );
-  const indexOfDuelToBeDeletedInChallengeTaker =
-    duelsOfChallengeTaker.findIndex((duel) => duel == duelId);
-
-  duelsOfChallenger.splice(indexOfDuelToBeDeletedInChallenger, 1);
-  duelsOfChallengeTaker.splice(indexOfDuelToBeDeletedInChallengeTaker, 1);
+  let erase1 = await db
+    .collection("users")
+    .updateOne({ id: challengerId }, { $pull: { duels: duelId } });
+  let erase2 = await db
+    .collection("users")
+    .updateOne({ id: challengeTakerId }, { $pull: { duels: duelId } });
 
   res.status(200);
   res.send({ winner: winnerId });
 });
 
 // odbijanje izazova drugog playera ili odbacivanje izazova koji smo sami postavili
-app.delete("/duel/quit", (req, res) => {
+app.delete("/duel/quit", async (req, res) => {
   const { duelId } = req.body;
-  const indexOfDuelToBeDeleted = duels.findIndex((duel) => duel.id == duelId);
-  duels.splice(indexOfDuelToBeDeleted, 1);
+  let db = await connect();
+  let duelToremove = await db
+    .collection("duels")
+    .findOneAndDelete({ id: duelId });
+
   res.status(200);
   res.send({ requestCompleted: true });
 });
 
-app.get("/game/:id", (req, res) => {
+app.get("/game/:id", async (req, res) => {
   const playlistId = req.params.id;
-  const playlistSongsMixed = playlists.find(
-    (givenPlaylist) => givenPlaylist.title == playlistId
-  ).songs;
+  let db = await connect();
+  let thePlaylist = await db
+    .collection("playlists")
+    .findOne({ title: playlistId });
+  const playlistSongsMixed = thePlaylist.songs;
 
   const roundTypes = ["artist", "title"];
   const firstRoundType =
@@ -355,26 +545,45 @@ app.get("/game/:id", (req, res) => {
   do {
     shuffled = [...playlistSongsMixed].sort(() => 0.5 - Math.random());
     shuffledFiltered = shuffled.slice(0, 12);
-
     _firstRoundSongs = shuffledFiltered.slice(0, 4);
     _secondRoundSongs = shuffledFiltered.slice(4, 8);
     _thirdRoundSongs = shuffledFiltered.slice(8, 12);
 
-    _firstRoundSongsString = _firstRoundSongs.map((songId) => {
-      if (firstRoundType === "title")
-        return songs.find((song) => song.id === songId).title;
-      else return songs.find((song) => song.id === songId).artist;
-    });
-    _secondRoundSongsString = _secondRoundSongs.map((songId) => {
-      if (secondRoundType === "title")
-        return songs.find((song) => song.id === songId).title;
-      else return songs.find((song) => song.id === songId).artist;
-    });
-    _thirdRoundSongsString = _thirdRoundSongs.map((songId) => {
-      if (thirdRoundType === "title")
-        return songs.find((song) => song.id === songId).title;
-      else return songs.find((song) => song.id === songId).artist;
-    });
+    _firstRoundSongsString = await Promise.all(
+      _firstRoundSongs.map(async (songId) => {
+        if (firstRoundType === "title") {
+          let theSong = await db.collection("songs").findOne({ id: songId });
+          return theSong.title;
+        } else {
+          let theSong = await db.collection("songs").findOne({ id: songId });
+          return theSong.artist;
+        }
+      })
+    );
+
+    _secondRoundSongsString = await Promise.all(
+      _secondRoundSongs.map(async (songId) => {
+        if (secondRoundType === "title") {
+          let theSong = await db.collection("songs").findOne({ id: songId });
+          return theSong.title;
+        } else {
+          let theSong = await db.collection("songs").findOne({ id: songId });
+          return theSong.artist;
+        }
+      })
+    );
+
+    _thirdRoundSongsString = await Promise.all(
+      _thirdRoundSongs.map(async (songId) => {
+        if (thirdRoundType === "title") {
+          let theSong = await db.collection("songs").findOne({ id: songId });
+          return theSong.title;
+        } else {
+          let theSong = await db.collection("songs").findOne({ id: songId });
+          return theSong.artist;
+        }
+      })
+    );
   } while (
     new Set(_firstRoundSongsString).size !== _firstRoundSongsString.length ||
     new Set(_secondRoundSongsString).size !== _secondRoundSongsString.length ||
@@ -398,36 +607,25 @@ app.get("/game/:id", (req, res) => {
   const thirdRoundCorrectAnswer =
     thirdRoundSongs[Math.floor(Math.random() * thirdRoundSongs.length)];
 
-  const firstRoundCorrectAnswerString =
-    firstRoundType === "title"
-      ? songs.find((song) => song.id === firstRoundCorrectAnswer).title
-      : songs.find((song) => song.id === firstRoundCorrectAnswer).artist;
-  const secondRoundCorrectAnswerString =
-    secondRoundType === "title"
-      ? songs.find((song) => song.id === secondRoundCorrectAnswer).title
-      : songs.find((song) => song.id === secondRoundCorrectAnswer).artist;
-  const thirdRoundCorrectAnswerString =
-    thirdRoundType === "title"
-      ? songs.find((song) => song.id === thirdRoundCorrectAnswer).title
-      : songs.find((song) => song.id === thirdRoundCorrectAnswer).artist;
+  const firstRoundCorrectAnswerObject = await db
+    .collection("songs")
+    .findOne({ id: firstRoundCorrectAnswer });
+  const secondRoundCorrectAnswerObject = await db
+    .collection("songs")
+    .findOne({ id: secondRoundCorrectAnswer });
+  const thirdRoundCorrectAnswerObject = await db
+    .collection("songs")
+    .findOne({ id: thirdRoundCorrectAnswer });
 
-  // console.log(firstRoundSongs, secondRoundSongs, thirdRoundSongs);
-  // console.log(firstRoundType, secondRoundType, thirdRoundType);
-  // console.log(
-  //   firstRoundCorrectAnswer,
-  //   secondRoundCorrectAnswer,
-  //   thirdRoundCorrectAnswer
-  // );
-  // console.log(
-  //   firstRoundSongsString,
-  //   secondRoundSongsString,
-  //   thirdRoundSongsString
-  // );
-  // console.log(
-  //   firstRoundCorrectAnswerString,
-  //   secondRoundCorrectAnswerString,
-  //   thirdRoundCorrectAnswerString
-  // );
+  const firstRoundCorrectAnswerString = await firstRoundCorrectAnswerObject[
+    firstRoundType
+  ];
+  const secondRoundCorrectAnswerString = await secondRoundCorrectAnswerObject[
+    secondRoundType
+  ];
+  const thirdRoundCorrectAnswerString = await thirdRoundCorrectAnswerObject[
+    thirdRoundType
+  ];
 
   const roundsData = {
     0: {
@@ -435,21 +633,18 @@ app.get("/game/:id", (req, res) => {
       correctAnswer: firstRoundCorrectAnswerString,
       correctAnswerId: firstRoundCorrectAnswer,
       playerPointsEarned: 0,
-      // audio: "",
     },
     1: {
       songs: secondRoundSongsString,
       correctAnswer: secondRoundCorrectAnswerString,
       correctAnswerId: secondRoundCorrectAnswer,
       playerPointsEarned: 0,
-      // audio: "",
     },
     2: {
       songs: thirdRoundSongsString,
       correctAnswer: thirdRoundCorrectAnswerString,
       correctAnswerId: thirdRoundCorrectAnswer,
       playerPointsEarned: 0,
-      // audio: "",
     },
   };
 
@@ -457,18 +652,25 @@ app.get("/game/:id", (req, res) => {
   res.send({ transactionCompleted: true, roundsData, playlistId });
 });
 
-app.put("/shop/playlist", (req, res) => {
+app.put("/shop/playlist", async (req, res) => {
   const { body } = req;
   const { playerId, playlistTitle } = body;
 
-  const playerIndex = users.findIndex((user) => user.id == playerId);
-  const playlistIndex = playlists.findIndex(
-    (playlist) => playlist.title == playlistTitle
-  );
+  let db = await connect();
+  let playerIndex = await db.collection("users").findOne({ id: playerId });
+  const thePlaylist = await db
+    .collection("playlists")
+    .findOne({ title: playlistTitle });
 
-  if (users[playerIndex].coins > playlists[playlistIndex].price) {
-    users[playerIndex].coins -= playlists[playlistIndex].price;
-    users[playerIndex].playlists.push(playlists[playlistIndex].title);
+  if (playerIndex.coins > thePlaylist.price) {
+    let playlistPrice = thePlaylist.price;
+    let playlistTitle = thePlaylist.title;
+    let buy1 = await db
+      .collection("users")
+      .updateOne({ id: playerId }, { $inc: { coins: -playlistPrice } });
+    let buy2 = await db
+      .collection("users")
+      .updateOne({ id: playerId }, { $push: { playlists: playlistTitle } });
     res.status(200);
     res.send({ transactionCompleted: true });
   } else {
@@ -477,16 +679,20 @@ app.put("/shop/playlist", (req, res) => {
   }
 });
 
-app.get("/rivalry", (req, res) => {
-  res.status(200);
-  res.send(rivalries);
+app.get("/rivalry", async (req, res) => {
+  let db = await connect();
+  let cursor = await db.collection("rivalries").find();
+  let results = await cursor.toArray();
+  res.json(results);
 });
 
-app.get("/user/:id/rivalry", (req, res) => {
+app.get("/user/:id/rivalry", async (req, res) => {
   const id = Number(req.params.id);
-  const specificPlayereRivalries = rivalries.filter(
-    (rivalry) => rivalry.playerOneId == id || rivalry.playerTwoId == id
-  );
+  let db = await connect();
+  let cursor = await db
+    .collection("rivalries")
+    .find({ $or: [{ playerOneId: id }, { playerTwoId: id }] });
+  let specificPlayereRivalries = await cursor.toArray();
   if (specificPlayereRivalries) {
     res.status(200);
     res.send(specificPlayereRivalries);
