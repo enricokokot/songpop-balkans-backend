@@ -7,7 +7,6 @@ router.get("/", async (req, res) => {
   let db = await connect();
   let cursor = await db.collection("playlists").find();
   let results = await cursor.toArray();
-  console.log("IN ROUTER!");
   res.json(results);
 });
 
