@@ -82,6 +82,7 @@ router.post(
 
       let result = await db.collection("duels").insertOne({
         id: duelId,
+        time: Date.now(),
         playerOneId: challengerId,
         playerTwoId: challengeTakerId,
         challengerId,
