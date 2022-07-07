@@ -187,7 +187,7 @@ router.get("/:id/rivalry", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
   let cursor = await db.collection("rivalries").find({
-    $or: [{ playerOneId: ObjectId(id) }, { playerTwoId: ObjectId(id) }],
+    $or: [{ playerOneId: id }, { playerTwoId: id }],
   });
   let specificPlayereRivalries = await cursor.toArray();
   if (specificPlayereRivalries) {
