@@ -1,5 +1,6 @@
 import express from "express";
 import connect from "../db.js";
+import { ObjectId } from "mongodb";
 
 export const router = express.Router();
 
@@ -11,21 +12,20 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const id = Number(req.params.id);
+  const id = req.params.id;
   let db = await connect();
-  let cursor = await db.collection("duels").find();
-  let specificUser = await db.collection("users").findOne({ id: id });
-  const specificPlayerDuelIds = specificUser.duels;
-  const allDuels = await cursor.toArray();
 
-  const specificPlayerDuels = allDuels.filter((duel) =>
-    specificPlayerDuelIds.includes(duel.id)
-  );
-  const specificPlayerDuelsWhereHeIsTheChallenger = specificPlayerDuels.filter(
-    (duel) => duel.challengerId === id
-  );
-  const specificPlayerDuelsWhereHeIsBeingChallenged =
-    specificPlayerDuels.filter((duel) => duel.challengerId !== id);
+  let result1 = await db
+    .collection("duels")
+    .find({ challengerId: ObjectId(id).toString() });
+
+  let result2 = await db
+    .collection("duels")
+    .find({ challengeTakerId: ObjectId(id).toString() });
+
+  const specificPlayerDuelsWhereHeIsTheChallenger = await result1.toArray();
+  const specificPlayerDuelsWhereHeIsBeingChallenged = await result2.toArray();
+
   const specificPlayerDuelsDivided = {
     specificPlayerDuelsWhereHeIsTheChallenger,
     specificPlayerDuelsWhereHeIsBeingChallenged,
@@ -63,7 +63,6 @@ router.post(
       res.status(200);
       res.send({ requestCompleted: false });
     } else {
-      const duelId = String(challengerId) + String(challengeTakerId);
       Object.keys(roundsData).forEach((key) => {
         delete Object.assign(roundsData[key], {
           ["playerTimeAnswered"]: roundsData[key]["timeAnswered"],
@@ -80,8 +79,7 @@ router.post(
         .collection("playlists")
         .findOne({ title: playlist });
 
-      let result = await db.collection("duels").insertOne({
-        id: duelId,
+      const result = await db.collection("duels").insertOne({
         time: Date.now(),
         playerOneId: challengerId,
         playerTwoId: challengeTakerId,
@@ -96,25 +94,27 @@ router.post(
       });
 
       let challengerUser = await db
-        .collection("users")
-        .findOne({ id: challengerId });
-      let newChallengerUser = challengerUser.duels.push(duelId);
+        .collection("testUsers")
+        .findOne({ _id: ObjectId(challengerId) });
+      let newChallengerUser = challengerUser.duels.push(result.insertedId);
       let newChallengerUserDuels = challengerUser.duels;
       let challengerUserResult = await db
-        .collection("users")
+        .collection("testUsers")
         .updateOne(
-          { id: challengerId },
+          { _id: ObjectId(challengerId) },
           { $set: { duels: newChallengerUserDuels } }
         );
       let challengeTakerUser = await db
-        .collection("users")
-        .findOne({ id: challengeTakerId });
-      let newChallengeTakerUser = challengeTakerUser.duels.push(duelId);
+        .collection("testUsers")
+        .findOne({ _id: ObjectId(challengeTakerId) });
+      let newChallengeTakerUser = challengeTakerUser.duels.push(
+        result.insertedId
+      );
       let newChallengeTakerUserDuels = challengeTakerUser.duels;
       let challengeTakerUserResult = await db
-        .collection("users")
+        .collection("testUsers")
         .updateOne(
-          { id: challengeTakerId },
+          { _id: ObjectId(challengeTakerId) },
           { $set: { duels: newChallengeTakerUserDuels } }
         );
 
@@ -128,8 +128,8 @@ router.post(
 router.put("/end", async (req, res) => {
   const { duelId, chalengeeScore } = req.body;
   let db = await connect();
-  let duel = await db.collection("duels").findOne({ id: duelId });
-  duel.challengeTakerScore = Number(chalengeeScore);
+  let duel = await db.collection("duels").findOne({ _id: ObjectId(duelId) });
+  duel.challengeTakerScore = chalengeeScore;
   const {
     challengerId,
     challengeTakerId,
@@ -167,28 +167,32 @@ router.put("/end", async (req, res) => {
 
   if (winnerId || winnerId === 0) {
     const loserId = winnerId == challengerId ? challengeTakerId : challengerId;
-    let winnerUser = await db.collection("users").findOne({ id: winnerId });
-    let loserUser = await db.collection("users").findOne({ id: loserId });
+    let winnerUser = await db
+      .collection("testUsers")
+      .findOne({ _id: ObjectId(winnerId) });
+    let loserUser = await db
+      .collection("testUsers")
+      .findOne({ _id: ObjectId(loserId) });
 
     let winnerUserResult1 = await db
-      .collection("users")
-      .updateOne({ id: winnerId }, { $inc: { "games played": 1 } });
+      .collection("testUsers")
+      .updateOne({ _id: ObjectId(winnerId) }, { $inc: { "games played": 1 } });
     let winnerUserResult2 = await db
-      .collection("users")
-      .updateOne({ id: winnerId }, { $inc: { "games won": 1 } });
+      .collection("testUsers")
+      .updateOne({ _id: ObjectId(winnerId) }, { $inc: { "games won": 1 } });
     let winnerUserResult3 = await db
-      .collection("users")
-      .updateOne({ id: winnerId }, { $inc: { coins: 3 } });
+      .collection("testUsers")
+      .updateOne({ _id: ObjectId(winnerId) }, { $inc: { coins: 3 } });
 
     let loserUserResult1 = await db
-      .collection("users")
-      .updateOne({ id: loserId }, { $inc: { "games played": 1 } });
+      .collection("testUsers")
+      .updateOne({ _id: ObjectId(loserId) }, { $inc: { "games played": 1 } });
     let loserUserResult2 = await db
-      .collection("users")
-      .updateOne({ id: loserId }, { $inc: { "games lost": 1 } });
+      .collection("testUsers")
+      .updateOne({ _id: ObjectId(loserId) }, { $inc: { "games lost": 1 } });
     let loserUserResult3 = await db
-      .collection("users")
-      .updateOne({ id: loserId }, { $inc: { coins: 1 } });
+      .collection("testUsers")
+      .updateOne({ _id: ObjectId(loserId) }, { $inc: { coins: 1 } });
 
     winnerId > loserId
       ? db
@@ -205,15 +209,15 @@ router.put("/end", async (req, res) => {
           );
   } else {
     let challengerResult = await db
-      .collection("users")
+      .collection("testUsers")
       .updateOne(
-        { id: challengerId },
+        { _id: ObjectId(challengerId) },
         { $inc: { "games played": 1, "games tied": 1, coins: 2 } }
       );
     let challengeTakerResult = await db
-      .collection("users")
+      .collection("testUsers")
       .updateOne(
-        { id: challengeTakerId },
+        { _id: ObjectId(challengeTakerId) },
         { $inc: { "games played": 1, "games tied": 1, coins: 2 } }
       );
 
@@ -225,14 +229,20 @@ router.put("/end", async (req, res) => {
 
   let duelToRemove = await db
     .collection("duels")
-    .findOneAndDelete({ id: duelId });
+    .findOneAndDelete({ _id: ObjectId(duelId) });
 
   let erase1 = await db
-    .collection("users")
-    .updateOne({ id: challengerId }, { $pull: { duels: duelId } });
+    .collection("testUsers")
+    .updateOne(
+      { _id: ObjectId(challengerId) },
+      { $pull: { duels: ObjectId(duelId) } }
+    );
   let erase2 = await db
-    .collection("users")
-    .updateOne({ id: challengeTakerId }, { $pull: { duels: duelId } });
+    .collection("testUsers")
+    .updateOne(
+      { _id: ObjectId(challengeTakerId) },
+      { $pull: { duels: ObjectId(duelId) } }
+    );
 
   res.status(200);
   res.send({ winner: winnerId });
@@ -242,7 +252,7 @@ router.put("/end", async (req, res) => {
 router.delete("/quit", async (req, res) => {
   const { duelId } = req.body;
   let db = await connect();
-  let duelToremove = await db
+  let duelToRemove = await db
     .collection("duels")
     .findOneAndDelete({ id: duelId });
 

@@ -1,5 +1,6 @@
 import express from "express";
 import connect from "../db.js";
+import { ObjectId } from "mongodb";
 
 export const router = express.Router();
 
@@ -22,20 +23,28 @@ router.put("/buy", async (req, res) => {
   const { playerId, playlistTitle } = req.body;
 
   let db = await connect();
-  let playerIndex = await db.collection("users").findOne({ id: playerId });
+  let playerIndex = await db
+    .collection("testUsers")
+    .findOne({ _id: ObjectId(playerId) });
   const thePlaylist = await db
     .collection("playlists")
     .findOne({ title: playlistTitle });
 
-  if (playerIndex.coins > thePlaylist.price) {
+  if (playerIndex.coins >= thePlaylist.price) {
     let playlistPrice = thePlaylist.price;
     let playlistTitle = thePlaylist.title;
     let buy1 = await db
-      .collection("users")
-      .updateOne({ id: playerId }, { $inc: { coins: -playlistPrice } });
+      .collection("testUsers")
+      .updateOne(
+        { _id: ObjectId(playerId) },
+        { $inc: { coins: -playlistPrice } }
+      );
     let buy2 = await db
-      .collection("users")
-      .updateOne({ id: playerId }, { $push: { playlists: playlistTitle } });
+      .collection("testUsers")
+      .updateOne(
+        { _id: ObjectId(playerId) },
+        { $push: { playlists: playlistTitle } }
+      );
     res.status(200);
     res.send({ transactionCompleted: true });
   } else {
