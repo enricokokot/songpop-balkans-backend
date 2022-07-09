@@ -129,5 +129,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# audio file
+# audio files
+songs.js
 output.mp3
+assets/clips/
