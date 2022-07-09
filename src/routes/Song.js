@@ -72,7 +72,7 @@ router.get("/:id/audio", async (req, res) => {
         console.log("File downloaded!");
       });
     res.status(200);
-    setTimeout(() => res.download(resolve("./output.mp3")), 1000);
+    setTimeout(() => res.download(resolve("./output.mp3")), 2000);
   } else {
     res.status(200);
     res.send("Song audio missing");
