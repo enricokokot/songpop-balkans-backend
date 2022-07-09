@@ -10,7 +10,10 @@ import { router as playlistRoute } from "./routes/Playlist.js";
 import { router as rivalryRoute } from "./routes/Rivalry.js";
 
 const app = express();
-const port = 3000;
+let port = process.env.PORT;
+if (port == null || port == "") {
+  port = 3000;
+}
 
 app.use(cors());
 app.use(express.json());
