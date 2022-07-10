@@ -37,7 +37,7 @@ app.post("/auth", async (req, res) => {
 
 app.get("/", (req, res) => {
   res.status(200);
-  res.send("Home of Songpop-Balkans");
+  res.send("Home of Songpop Balkans!");
 });
 
 app.listen(port, () => console.log(`Listening on port ${port}!`));
