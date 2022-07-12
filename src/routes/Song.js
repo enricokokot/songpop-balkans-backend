@@ -9,20 +9,58 @@ import { resolve } from "path";
 export const router = express.Router();
 
 // upload pjesama sa lokalnog storage-a na mongo
-// router.post("/", async (req, res) => {
-//   let db = await connect();
-//   songs.forEach((song) => {
-//     let songUploadResult = db.collection("songs").insertOne({
-//       id: song.id,
-//       title: song.title,
-//       artist: song.artist,
-//       playlist: song.playlist,
-//       file: song.file.slice(73),
-//     });
-//   });
-//   res.status(200);
-//   res.send("Songs uploaded successfully!");
-// });
+router.post("/", async (req, res) => {
+  let db = await connect();
+  const filesLocation = "C:/Users/ekoko/Documents/Audacity/";
+  const filenames = fs.readdirSync(filesLocation);
+  // TODO: replace hardcoded counter
+  let counter = 55;
+  const songs = filenames.map((filename) => {
+    const splitFilename = filename
+      .replaceAll("_", " ")
+      .split("-")
+      .map((part) => part.trim());
+    const id = counter;
+    const title = splitFilename[1];
+    const artist = splitFilename[0];
+    const playlist = "rock";
+    const file = filename;
+    counter += 1;
+    return {
+      id,
+      title,
+      artist,
+      playlist,
+      file,
+    };
+  });
+  // console.log("songs", songs);
+  for (const song of songs) {
+    const songFound = await db.collection("songs").findOne({ id: song.id });
+    if (!songFound) {
+      await db.collection("songs").insertOne({
+        id: song.id,
+        title: song.title,
+        artist: song.artist,
+        playlist: song.playlist,
+        file: song.file,
+      });
+      const currentFileLocation = filesLocation + song.file;
+      // console.log("currentFileLocation", currentFileLocation);
+      let bucket = new GridFSBucket(db);
+      fs.createReadStream(currentFileLocation)
+        .pipe(bucket.openUploadStream(song.file))
+        .on("error", function (error) {
+          assert.ifError(error);
+        })
+        .on("finish", function () {
+          console.log("File uploaded:", currentFileLocation);
+        });
+    }
+  }
+  res.status(200);
+  res.send("Songs uploaded successfully!");
+});
 
 router.get("/", async (req, res) => {
   let db = await connect();
