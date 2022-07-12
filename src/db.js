@@ -1,7 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
 import mongo from "mongodb";
 
-let connection_string =
-  "mongodb+srv://admin:8Pv63O3i2cViC5H6@studentcluster.ivorqpy.mongodb.net/?retryWrites=true&w=majority";
+let connection_string = process.env.CONNECTION_STRING;
 
 let client = new mongo.MongoClient(connection_string, {
   useNewUrlParser: true,
