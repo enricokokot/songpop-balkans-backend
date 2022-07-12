@@ -249,13 +249,28 @@ router.put("/end", async (req, res) => {
 });
 
 // odbijanje izazova drugog playera ili odbacivanje izazova koji smo sami postavili
-router.delete("/quit", async (req, res) => {
-  const { duelId } = req.body;
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
   let db = await connect();
   let duelToRemove = await db
     .collection("duels")
-    .findOneAndDelete({ id: duelId });
-
+    .findOne({ _id: ObjectId(id) });
+  const { playerOneId, playerTwoId } = duelToRemove;
+  const playerOneResult = await db
+    .collection("testUsers")
+    .updateOne(
+      { _id: ObjectId(playerOneId) },
+      { $pull: { duels: ObjectId(id) } }
+    );
+  const playerTwoResult = await db
+    .collection("testUsers")
+    .updateOne(
+      { _id: ObjectId(playerTwoId) },
+      { $pull: { duels: ObjectId(id) } }
+    );
+  const duelResult = await db
+    .collection("duels")
+    .findOneAndDelete({ _id: ObjectId(id) });
   res.status(200);
   res.send({ requestCompleted: true });
 });
