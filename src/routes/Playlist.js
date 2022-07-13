@@ -91,10 +91,14 @@ router.get("/:id/game", async (req, res) => {
     _firstRoundSongsString = await Promise.all(
       _firstRoundSongs.map(async (songId) => {
         if (firstRoundType === "title") {
-          let theSong = await db.collection("songs").findOne({ id: songId });
+          let theSong = await db
+            .collection("songs")
+            .findOne({ _id: ObjectId(songId) });
           return theSong.title;
         } else {
-          let theSong = await db.collection("songs").findOne({ id: songId });
+          let theSong = await db
+            .collection("songs")
+            .findOne({ _id: ObjectId(songId) });
           return theSong.artist;
         }
       })
@@ -103,10 +107,14 @@ router.get("/:id/game", async (req, res) => {
     _secondRoundSongsString = await Promise.all(
       _secondRoundSongs.map(async (songId) => {
         if (secondRoundType === "title") {
-          let theSong = await db.collection("songs").findOne({ id: songId });
+          let theSong = await db
+            .collection("songs")
+            .findOne({ _id: ObjectId(songId) });
           return theSong.title;
         } else {
-          let theSong = await db.collection("songs").findOne({ id: songId });
+          let theSong = await db
+            .collection("songs")
+            .findOne({ _id: ObjectId(songId) });
           return theSong.artist;
         }
       })
@@ -115,10 +123,14 @@ router.get("/:id/game", async (req, res) => {
     _thirdRoundSongsString = await Promise.all(
       _thirdRoundSongs.map(async (songId) => {
         if (thirdRoundType === "title") {
-          let theSong = await db.collection("songs").findOne({ id: songId });
+          let theSong = await db
+            .collection("songs")
+            .findOne({ _id: ObjectId(songId) });
           return theSong.title;
         } else {
-          let theSong = await db.collection("songs").findOne({ id: songId });
+          let theSong = await db
+            .collection("songs")
+            .findOne({ _id: ObjectId(songId) });
           return theSong.artist;
         }
       })
@@ -148,13 +160,13 @@ router.get("/:id/game", async (req, res) => {
 
   const firstRoundCorrectAnswerObject = await db
     .collection("songs")
-    .findOne({ id: firstRoundCorrectAnswer });
+    .findOne({ _id: ObjectId(firstRoundCorrectAnswer) });
   const secondRoundCorrectAnswerObject = await db
     .collection("songs")
-    .findOne({ id: secondRoundCorrectAnswer });
+    .findOne({ _id: ObjectId(secondRoundCorrectAnswer) });
   const thirdRoundCorrectAnswerObject = await db
     .collection("songs")
-    .findOne({ id: thirdRoundCorrectAnswer });
+    .findOne({ _id: ObjectId(thirdRoundCorrectAnswer) });
 
   const firstRoundCorrectAnswerString = await firstRoundCorrectAnswerObject[
     firstRoundType
@@ -189,4 +201,26 @@ router.get("/:id/game", async (req, res) => {
 
   res.status(200);
   res.send({ transactionCompleted: true, roundsData, playlistId });
+});
+
+// zamjena bazičnih id-eva u listi pjesama playliste sa
+// njihovom mongodb inačicom
+router.put("/", async (req, res) => {
+  let db = await connect();
+  let cursor = await db.collection("playlists").find();
+  let results = await cursor.toArray();
+  for (const playlist of results) {
+    for (const song of playlist.songs) {
+      const songDetails = await db.collection("songs").findOne({ id: song });
+      if (songDetails !== null) {
+        const songId = songDetails._id;
+        console.log("songId, playlist.title, playlist.songs");
+        console.log(songId, playlist.title, playlist.songs);
+        const changedSong = await db
+          .collection("playlists")
+          .update({ title: playlist.title }, { $addToSet: { songs: songId } });
+      }
+    }
+  }
+  res.send("good");
 });

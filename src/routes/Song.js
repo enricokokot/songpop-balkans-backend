@@ -5,6 +5,7 @@ import assert from "assert";
 // import { songs } from "../songs.js";
 import { GridFSBucket } from "mongodb";
 import { resolve } from "path";
+import { ObjectId } from "mongodb";
 
 export const router = express.Router();
 
@@ -13,40 +14,33 @@ router.post("/", async (req, res) => {
   let db = await connect();
   const filesLocation = "C:/Users/ekoko/Documents/Audacity/";
   const filenames = fs.readdirSync(filesLocation);
-  // TODO: replace hardcoded counter
-  let counter = 55;
   const songs = filenames.map((filename) => {
     const splitFilename = filename
       .replaceAll("_", " ")
       .split("-")
       .map((part) => part.trim());
-    const id = counter;
     const title = splitFilename[1];
     const artist = splitFilename[0];
     const playlist = "rock";
     const file = filename;
     counter += 1;
     return {
-      id,
       title,
       artist,
       playlist,
       file,
     };
   });
-  // console.log("songs", songs);
   for (const song of songs) {
-    const songFound = await db.collection("songs").findOne({ id: song.id });
+    const songFound = await db.collection("songs").findOne({ file: file });
     if (!songFound) {
       await db.collection("songs").insertOne({
-        id: song.id,
         title: song.title,
         artist: song.artist,
         playlist: song.playlist,
         file: song.file,
       });
       const currentFileLocation = filesLocation + song.file;
-      // console.log("currentFileLocation", currentFileLocation);
       let bucket = new GridFSBucket(db);
       fs.createReadStream(currentFileLocation)
         .pipe(bucket.openUploadStream(song.file))
@@ -88,16 +82,18 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const id = Number(req.params.id);
   let db = await connect();
-  let cursor = await db.collection("songs").findOne({ id: id });
+  let cursor = await db.collection("songs").findOne({ _id: ObjectId(id) });
   let results = await cursor.toArray();
   res.json(results);
 });
 
 router.get("/:id/audio", async (req, res) => {
-  const id = Number(req.params.id);
+  const id = req.params.id;
   let db = await connect();
   let bucket = new GridFSBucket(db);
-  let specificSong = await db.collection("songs").findOne({ id: id });
+  let specificSong = await db
+    .collection("songs")
+    .findOne({ _id: ObjectId(id) });
   if (specificSong.file) {
     const songAudioName = specificSong.file;
     bucket
@@ -141,3 +137,12 @@ router.get("/:id/audio", async (req, res) => {
 //     res.send("No song with that id");
 //   }
 // });
+
+// brisanje zastarjelih id-eva
+router.put("/", async (req, res) => {
+  let db = await connect();
+  let cursor = await db
+    .collection("songs")
+    .updateMany({ id: { $exists: true } }, { $unset: { id: "" } });
+  res.status(200).send({ operationCompleted: "true" });
+});

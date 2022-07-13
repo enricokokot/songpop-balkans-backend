@@ -274,3 +274,25 @@ router.delete("/:id", async (req, res) => {
   res.status(200);
   res.send({ requestCompleted: true });
 });
+
+// brisanje duela koji sadrže zastarjele podatke koji ruše aplikaciju
+router.delete("/", async (req, res) => {
+  let db = await connect();
+  let cursor = await db
+    .collection("duels")
+    .find({ "rounds.0.correctAnswerId": { $type: "number" } });
+  let duelResults = await cursor.toArray();
+  for (const duel of duelResults) {
+    const duelId = duel._id;
+    const { playerOneId, playerTwoId } = duel;
+    const playerOne = await db
+      .collection("testUsers")
+      .updateOne({ _id: ObjectId(playerOneId) }, { $pull: { duels: duelId } });
+    const playerTwo = await db
+      .collection("testUsers")
+      .updateOne({ _id: ObjectId(playerTwoId) }, { $pull: { duels: duelId } });
+    let removalResult = await db.collection("duels").deleteOne({ _id: duelId });
+  }
+  res.status(200);
+  res.send({ requestCompleted: true });
+});
