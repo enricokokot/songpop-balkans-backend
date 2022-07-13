@@ -1,12 +1,10 @@
-import connect from "./db.js";
+import connect, { userDb } from "./db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 (async () => {
   let db = await connect();
-  await db
-    .collection("testUsers")
-    .createIndex({ username: 1 }, { unique: true });
+  await db.collection(userDb).createIndex({ username: 1 }, { unique: true });
 })();
 
 export default {
@@ -58,7 +56,7 @@ export default {
     };
 
     try {
-      let result = await db.collection("testUsers").insertOne(doc);
+      let result = await db.collection(userDb).insertOne(doc);
       if (result && result.insertedId) return result.insertedId;
     } catch (e) {
       // might be cause of subsequent errors after this one
@@ -71,7 +69,7 @@ export default {
 
   async authenticateUser(username, password) {
     let db = await connect();
-    let user = await db.collection("testUsers").findOne({ username: username });
+    let user = await db.collection(userDb).findOne({ username: username });
 
     if (
       user &&

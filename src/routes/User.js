@@ -1,6 +1,6 @@
 import express from "express";
 import { ObjectId } from "mongodb";
-import connect from "../db.js";
+import connect, { userDb } from "../db.js";
 import auth from "../auth.js";
 
 export const router = express.Router();
@@ -18,7 +18,7 @@ router.post("/", async (req, res) => {
 
 router.get("/", async (req, res) => {
   let db = await connect();
-  let cursor = await db.collection("testUsers").find();
+  let cursor = await db.collection(userDb).find();
   let results = await cursor.toArray();
   res.json(results);
 });
@@ -26,18 +26,14 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
-  let specificUser = await db
-    .collection("testUsers")
-    .findOne({ _id: ObjectId(id) });
+  let specificUser = await db.collection(userDb).findOne({ _id: ObjectId(id) });
   res.json(specificUser);
 });
 
 router.get("/:id/coin", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
-  let specificUser = await db
-    .collection("testUsers")
-    .findOne({ _id: ObjectId(id) });
+  let specificUser = await db.collection(userDb).findOne({ _id: ObjectId(id) });
   const specificUserCoin = specificUser.coins;
   res.status(200);
   res.send({ availableCoins: specificUserCoin });
@@ -46,9 +42,7 @@ router.get("/:id/coin", async (req, res) => {
 router.get("/:id/playlist", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
-  let specificUser = await db
-    .collection("testUsers")
-    .findOne({ _id: ObjectId(id) });
+  let specificUser = await db.collection(userDb).findOne({ _id: ObjectId(id) });
   const specificUserPlaylists = specificUser.playlists;
   res.status(200);
   res.send(specificUserPlaylists);
@@ -57,9 +51,7 @@ router.get("/:id/playlist", async (req, res) => {
 router.get("/:id/achievement", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
-  let specificUser = await db
-    .collection("testUsers")
-    .findOne({ _id: ObjectId(id) });
+  let specificUser = await db.collection(userDb).findOne({ _id: ObjectId(id) });
   const specificUserAchievements = specificUser.achievements;
   res.status(200);
   res.send(specificUserAchievements);
@@ -70,7 +62,7 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
   const achievementId = Number(req.params.achievementId);
   let db = await connect();
   let specificUser = await db
-    .collection("testUsers")
+    .collection(userDb)
     .findOne({ _id: ObjectId(userId) });
   const specificUserAchievements = specificUser.achievements;
   const specificUserAchievement = specificUserAchievements.find(
@@ -80,13 +72,13 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
     let achievementAchieved = false;
     if (achievementId === 0) {
       let achievementAction = await db
-        .collection("testUsers")
+        .collection(userDb)
         .updateOne(
           { _id: ObjectId(userId) },
           { $inc: { "achievements.0.progress": 1 } }
         );
       let achievementAction2 = await db
-        .collection("testUsers")
+        .collection(userDb)
         .findOne({ _id: ObjectId(userId) });
       if (
         achievementAction2.achievements[0].progress ===
@@ -95,13 +87,13 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
         achievementAchieved = true;
     } else if (achievementId === 1) {
       let achievementAction = await db
-        .collection("testUsers")
+        .collection(userDb)
         .updateOne(
           { _id: ObjectId(userId) },
           { $inc: { "achievements.1.progress": 1 } }
         );
       let achievementAction2 = await db
-        .collection("testUsers")
+        .collection(userDb)
         .findOne({ _id: ObjectId(userId) });
       if (
         achievementAction2.achievements[1].progress ===
@@ -110,13 +102,13 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
         achievementAchieved = true;
     } else if (achievementId === 2) {
       let achievementAction = await db
-        .collection("testUsers")
+        .collection(userDb)
         .updateOne(
           { _id: ObjectId(userId) },
           { $inc: { "achievements.2.progress": 1 } }
         );
       let achievementAction2 = await db
-        .collection("testUsers")
+        .collection(userDb)
         .findOne({ _id: ObjectId(userId) });
       if (
         achievementAction2.achievements[2].progress ===
@@ -125,13 +117,13 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
         achievementAchieved = true;
     } else if (achievementId === 3) {
       let achievementAction = await db
-        .collection("testUsers")
+        .collection(userDb)
         .updateOne(
           { _id: ObjectId(userId) },
           { $inc: { "achievements.3.progress": 1 } }
         );
       let achievementAction2 = await db
-        .collection("testUsers")
+        .collection(userDb)
         .findOne({ _id: ObjectId(userId) });
       if (
         achievementAction2.achievements[3].progress ===
@@ -140,13 +132,13 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
         achievementAchieved = true;
     } else if (achievementId === 4) {
       let achievementAction = await db
-        .collection("testUsers")
+        .collection(userDb)
         .updateOne(
           { _id: ObjectId(userId) },
           { $inc: { "achievements.4.progress": 1 } }
         );
       let achievementAction2 = await db
-        .collection("testUsers")
+        .collection(userDb)
         .findOne({ _id: ObjectId(userId) });
       if (
         achievementAction2.achievements[4].progress ===
@@ -155,13 +147,13 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
         achievementAchieved = true;
     } else if (achievementId === 5) {
       let achievementAction = await db
-        .collection("testUsers")
+        .collection(userDb)
         .updateOne(
           { _id: ObjectId(userId) },
           { $inc: { "achievements.5.progress": 1 } }
         );
       let achievementAction2 = await db
-        .collection("testUsers")
+        .collection(userDb)
         .findOne({ _id: ObjectId(userId) });
       if (
         achievementAction2.achievements[5].progress ===
