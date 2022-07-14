@@ -214,8 +214,6 @@ router.put("/", async (req, res) => {
       const songDetails = await db.collection("songs").findOne({ id: song });
       if (songDetails !== null) {
         const songId = songDetails._id;
-        console.log("songId, playlist.title, playlist.songs");
-        console.log(songId, playlist.title, playlist.songs);
         const changedSong = await db
           .collection("playlists")
           .update({ title: playlist.title }, { $addToSet: { songs: songId } });
