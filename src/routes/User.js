@@ -23,6 +23,26 @@ router.get("/", async (req, res) => {
   res.json(results);
 });
 
+router.get("/:id/ordered", async (req, res) => {
+  const id = req.params.id;
+  const page = Number(req.query.page);
+  const limit = 6;
+  const db = await connect();
+  const user = await db.collection(userDb).findOne({ _id: ObjectId(id) });
+  const { reply, challenge, waiting } = user;
+  const users = reply.concat(challenge).concat(waiting);
+  const pageNumber = Math.ceil(users.length / limit);
+  const limitedUsers = users.slice(limit * page, limit * page + limit);
+  const results = [];
+  for (const limitedUser of limitedUsers) {
+    const wholeUser = await db
+      .collection(userDb)
+      .findOne({ _id: ObjectId(limitedUser) });
+    results.push(wholeUser);
+  }
+  res.json({ results, pageNumber });
+});
+
 router.get("/:id", async (req, res) => {
   const id = req.params.id;
   let db = await connect();

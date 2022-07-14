@@ -16,6 +16,9 @@ export default {
       playlists: [userData.playlist],
       friends: [],
       duels: [],
+      reply: [],
+      challenge: [],
+      waiting: [],
       coins: 0,
       "games played": 0,
       "games won": 0,
@@ -55,9 +58,21 @@ export default {
       ],
     };
 
+    let cursor = await db.collection(userDb).find();
+    cursor = await cursor.toArray();
+    doc.challenge = cursor.map((user) => user._id);
+
     try {
       let result = await db.collection(userDb).insertOne(doc);
-      if (result && result.insertedId) return result.insertedId;
+      if (result && result.insertedId) {
+        await db
+          .collection(userDb)
+          .updateMany(
+            { _id: { $ne: result.insertedId } },
+            { $push: { challenge: result.insertedId } }
+          );
+      }
+      return result.insertedId;
     } catch (e) {
       // might be cause of subsequent errors after this one
       if (e.code == 11000) {

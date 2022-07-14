@@ -118,6 +118,31 @@ router.post(
           { $set: { duels: newChallengeTakerUserDuels } }
         );
 
+      await db
+        .collection(userDb)
+        .updateOne(
+          { _id: ObjectId(challengerId) },
+          { $pull: { challenge: ObjectId(challengeTakerId) } }
+        );
+      await db
+        .collection(userDb)
+        .updateOne(
+          { _id: ObjectId(challengerId) },
+          { $push: { waiting: ObjectId(challengeTakerId) } }
+        );
+      await db
+        .collection(userDb)
+        .updateOne(
+          { _id: ObjectId(challengeTakerId) },
+          { $pull: { challenge: ObjectId(challengerId) } }
+        );
+      await db
+        .collection(userDb)
+        .updateOne(
+          { _id: ObjectId(challengeTakerId) },
+          { $push: { reply: ObjectId(challengerId) } }
+        );
+
       res.status(200);
       res.send({ requestCompleted: true });
     }
@@ -126,10 +151,10 @@ router.post(
 
 // odgovoranje na izazov kojeg je drugi player zapoceo i zavrsetak dvoboja
 router.put("/end", async (req, res) => {
-  const { duelId, chalengeeScore } = req.body;
+  const { duelId, challengeeScore } = req.body;
   let db = await connect();
   let duel = await db.collection("duels").findOne({ _id: ObjectId(duelId) });
-  duel.challengeTakerScore = chalengeeScore;
+  duel.challengeTakerScore = challengeeScore;
   const {
     challengerId,
     challengeTakerId,
@@ -165,7 +190,7 @@ router.put("/end", async (req, res) => {
     });
   }
 
-  if (winnerId || winnerId === 0) {
+  if (winnerId) {
     const loserId = winnerId == challengerId ? challengeTakerId : challengerId;
     let winnerUser = await db
       .collection(userDb)
@@ -242,6 +267,31 @@ router.put("/end", async (req, res) => {
     .updateOne(
       { _id: ObjectId(challengeTakerId) },
       { $pull: { duels: ObjectId(duelId) } }
+    );
+
+  await db
+    .collection(userDb)
+    .updateOne(
+      { _id: ObjectId(challengeTakerId) },
+      { $pull: { reply: ObjectId(challengerId) } }
+    );
+  await db
+    .collection(userDb)
+    .updateOne(
+      { _id: ObjectId(challengeTakerId) },
+      { $push: { challenge: ObjectId(challengerId) } }
+    );
+  await db
+    .collection(userDb)
+    .updateOne(
+      { _id: ObjectId(challengerId) },
+      { $pull: { waiting: ObjectId(challengeTakerId) } }
+    );
+  await db
+    .collection(userDb)
+    .updateOne(
+      { _id: ObjectId(challengerId) },
+      { $push: { challenge: ObjectId(challengeTakerId) } }
     );
 
   res.status(200);
