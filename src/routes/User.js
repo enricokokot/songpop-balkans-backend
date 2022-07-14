@@ -30,14 +30,60 @@ router.get("/:id/ordered", async (req, res) => {
   const db = await connect();
   const user = await db.collection(userDb).findOne({ _id: ObjectId(id) });
   const { reply, challenge, waiting } = user;
-  const users = reply.concat(challenge).concat(waiting);
+  const idsSmallerThanUser = [];
+  const idsLargerThanUser = [];
+  challenge.forEach((userId) =>
+    userId.toString() > id
+      ? idsLargerThanUser.push(userId.toString())
+      : idsSmallerThanUser.push(userId.toString())
+  );
+  const idsSmallerThanUserSum = [];
+  for (const userId of idsSmallerThanUser) {
+    const rivalry = await db
+      .collection("rivalries")
+      .findOne({ $and: [{ playerOneId: userId }, { playerTwoId: id }] });
+    const { playerOneScore, playerTwoScore } = rivalry || {
+      playerOneScore: 0,
+      playerTwoScore: 0,
+    };
+    const rivalrySum = playerOneScore + playerTwoScore;
+    idsSmallerThanUserSum.push(rivalrySum);
+  }
+  const idsLargerThanUserSum = [];
+  for (const userId of idsLargerThanUser) {
+    const rivalry = await db
+      .collection("rivalries")
+      .findOne({ $and: [{ playerOneId: id }, { playerTwoId: userId }] });
+    const { playerOneScore, playerTwoScore } = rivalry || {
+      playerOneScore: 0,
+      playerTwoScore: 0,
+    };
+    const rivalrySum = playerOneScore + playerTwoScore;
+    idsLargerThanUserSum.push(rivalrySum);
+  }
+
+  const ids = idsSmallerThanUser.concat(idsLargerThanUser);
+  const sums = idsSmallerThanUserSum.concat(idsLargerThanUserSum);
+  const idsAndSums = [];
+
+  let counter = 0;
+  for (const id of ids) {
+    idsAndSums.push({ id, sum: sums[counter] });
+    counter += 1;
+  }
+
+  idsAndSums.sort(function (a, b) {
+    return a.sum < b.sum ? 1 : b.sum < a.sum ? -1 : 0;
+  });
+
+  const newChallenge = idsAndSums.map((idAndSum) => ObjectId(idAndSum.id));
+
+  const users = reply.concat(newChallenge).concat(waiting);
   const pageNumber = Math.ceil(users.length / limit);
   const limitedUsers = users.slice(limit * page, limit * page + limit);
   const results = [];
   for (const limitedUser of limitedUsers) {
-    const wholeUser = await db
-      .collection(userDb)
-      .findOne({ _id: ObjectId(limitedUser) });
+    const wholeUser = await db.collection(userDb).findOne({ _id: limitedUser });
     results.push(wholeUser);
   }
   res.json({ results, pageNumber });
