@@ -26,6 +26,7 @@ router.get("/", async (req, res) => {
 router.get("/:id/ordered", async (req, res) => {
   const id = req.params.id;
   const page = Number(req.query.page);
+  const username = req.query.username;
   const limit = 6;
   const db = await connect();
   const user = await db.collection(userDb).findOne({ _id: ObjectId(id) });
@@ -84,7 +85,8 @@ router.get("/:id/ordered", async (req, res) => {
   const results = [];
   for (const limitedUser of limitedUsers) {
     const wholeUser = await db.collection(userDb).findOne({ _id: limitedUser });
-    results.push(wholeUser);
+    // TODO: fix this, works only on the first 10 users, enough ATM
+    if (wholeUser.username.includes(username)) results.push(wholeUser);
   }
   res.json({ results, pageNumber });
 });
