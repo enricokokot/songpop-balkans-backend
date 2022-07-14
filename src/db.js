@@ -10,7 +10,7 @@ let client = new mongo.MongoClient(connection_string, {
 });
 
 let db = null;
-export const userDb = "anotherUserDb";
+export const userDb = "users";
 
 export default () => {
   return new Promise((resolve, reject) => {

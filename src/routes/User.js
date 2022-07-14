@@ -50,6 +50,50 @@ router.get("/:id", async (req, res) => {
   res.json(specificUser);
 });
 
+router.delete("/:id", async (req, res) => {
+  const id = req.params.id;
+  const db = await connect();
+  const specificUser = await db
+    .collection(userDb)
+    .findOne({ _id: ObjectId(id) });
+  const { _id, duels, reply, challenge, waiting } = specificUser;
+  for (const userId of reply) {
+    await db
+      .collection("users")
+      .findOneAndUpdate({ _id: userId }, { $pull: { waiting: _id } });
+  }
+  for (const userId of challenge) {
+    await db
+      .collection("users")
+      .findOneAndUpdate({ _id: userId }, { $pull: { challenge: _id } });
+  }
+  for (const userId of waiting) {
+    await db
+      .collection("users")
+      .findOneAndUpdate({ _id: userId }, { $pull: { reply: _id } });
+  }
+  for (const duelId of duels) {
+    const specificDuel = await db.collection("duels").findOne({ _id: duelId });
+    if (specificDuel) {
+      const { playerOneId, playerTwoId } = specificDuel;
+      const otherPlayerId =
+        playerOneId === _id.toString()
+          ? ObjectId(playerTwoId)
+          : ObjectId(playerOneId);
+      console.log("otherPlayerId", otherPlayerId);
+      await db
+        .collection("users")
+        .findOneAndUpdate({ _id: otherPlayerId }, { $pull: { duels: duelId } });
+      await db.collection("duels").findOneAndDelete({ _id: duelId });
+    }
+  }
+  await db.collection("rivalries").deleteMany({
+    $or: [{ playerOneId: _id.toString() }, { playerTwoId: _id.toString() }],
+  });
+  await db.collection("users").deleteOne({ _id: _id });
+  res.json({ requestCompleted: true });
+});
+
 router.get("/:id/coin", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
