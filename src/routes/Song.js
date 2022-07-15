@@ -23,7 +23,6 @@ router.post("/", async (req, res) => {
     const artist = splitFilename[0];
     const playlist = "rock";
     const file = filename;
-    counter += 1;
     return {
       title,
       artist,
@@ -32,9 +31,9 @@ router.post("/", async (req, res) => {
     };
   });
   for (const song of songs) {
-    const songFound = await db.collection("songs").findOne({ file: file });
+    const songFound = await db.collection("songs").findOne({ file: song.file });
     if (!songFound) {
-      await db.collection("songs").insertOne({
+      const result = await db.collection("songs").insertOne({
         title: song.title,
         artist: song.artist,
         playlist: song.playlist,
@@ -49,6 +48,10 @@ router.post("/", async (req, res) => {
         })
         .on("finish", function () {
           console.log("File uploaded:", currentFileLocation);
+          db.collection("playlists").findOneAndUpdate(
+            { title: "Rock" },
+            { $push: { songs: result.insertedId } }
+          );
         });
     }
   }
