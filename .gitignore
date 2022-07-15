@@ -133,3 +133,6 @@ dist
 songs.js
 output.mp3
 assets/clips/
+
+# mongo
+dump
