@@ -2,9 +2,10 @@ import dotenv from "dotenv";
 dotenv.config();
 import mongo from "mongodb";
 
-let connection_string = process.env.CONNECTION_STRING;
+const connection_string = process.env.CONNECTION_STRING;
+const db_database = process.env.DB_DATABASE;
 
-let client = new mongo.MongoClient(connection_string, {
+const client = new mongo.MongoClient(connection_string, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -22,7 +23,7 @@ export default () => {
           reject("Connection to database failed: " + err);
         } else {
           console.log("Database connected successfully!");
-          db = client.db("songpop-balkans");
+          db = client.db(db_database);
           resolve(db);
         }
       });
