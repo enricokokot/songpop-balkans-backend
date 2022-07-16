@@ -169,6 +169,32 @@ router.get("/:id/achievement", async (req, res) => {
   res.send(specificUserAchievements);
 });
 
+router.put("/:userId/achievement/:achievementId", async (req, res) => {
+  const { userId, achievementId } = req.params;
+  const db = await connect();
+  const specificUser = await db
+    .collection(userDb)
+    .findOne({ _id: ObjectId(userId) });
+  const { appendedAchievement } = await specificUser;
+  if (appendedAchievement === Number(achievementId)) {
+    await db
+      .collection(userDb)
+      .findOneAndUpdate(
+        { _id: ObjectId(userId) },
+        { $set: { appendedAchievement: -1 } }
+      );
+  } else {
+    await db
+      .collection(userDb)
+      .findOneAndUpdate(
+        { _id: ObjectId(userId) },
+        { $set: { appendedAchievement: Number(achievementId) } }
+      );
+  }
+  res.status(200);
+  res.send({ taskCompleted: true });
+});
+
 router.patch("/:userId/achievement/:achievementId", async (req, res) => {
   const userId = req.params.userId;
   const achievementId = Number(req.params.achievementId);
