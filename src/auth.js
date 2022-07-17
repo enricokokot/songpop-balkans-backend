@@ -24,6 +24,7 @@ export default {
       "games won": 0,
       "games lost": 0,
       "games tied": 0,
+      appendedAchievement: -1,
       achievements: [
         {
           id: 0,
