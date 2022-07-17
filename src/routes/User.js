@@ -162,11 +162,18 @@ router.get("/:id/playlist", async (req, res) => {
 
 router.get("/:id/achievement", async (req, res) => {
   const id = req.params.id;
-  let db = await connect();
-  let specificUser = await db.collection(userDb).findOne({ _id: ObjectId(id) });
-  const specificUserAchievements = specificUser.achievements;
-  res.status(200);
-  res.send(specificUserAchievements);
+  if (id === undefined) {
+    let db = await connect();
+    let specificUser = await db
+      .collection(userDb)
+      .findOne({ _id: ObjectId(id) });
+    const specificUserAchievements = specificUser.achievements;
+    res.status(200);
+    res.send(specificUserAchievements);
+  } else {
+    res.status(200);
+    res.send({ error: "No such user" });
+  }
 });
 
 router.put("/:userId/achievement/:achievementId", async (req, res) => {
