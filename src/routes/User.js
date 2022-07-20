@@ -80,15 +80,20 @@ router.get("/:id/ordered", async (req, res) => {
   const newChallenge = idsAndSums.map((idAndSum) => ObjectId(idAndSum.id));
 
   const users = reply.concat(newChallenge).concat(waiting);
-  const pageNumber = Math.ceil(users.length / limit);
-  const limitedUsers = users.slice(limit * page, limit * page + limit);
   const results = [];
-  for (const limitedUser of limitedUsers) {
-    const wholeUser = await db.collection(userDb).findOne({ _id: limitedUser });
-    // TODO: fix this, works only on the first 10 users, enough ATM
+  for (const user of users) {
+    const wholeUser = await db.collection(userDb).findOne({ _id: user });
     if (wholeUser.username.includes(username)) results.push(wholeUser);
   }
-  res.json({ results, pageNumber });
+  const filteredResults = results.filter((user) =>
+    user.username.includes(username)
+  );
+  const pageNumber = Math.ceil(filteredResults.length / limit);
+  const paginatedResults = filteredResults.slice(
+    limit * page,
+    limit * page + limit
+  );
+  res.json({ results: paginatedResults, pageNumber });
 });
 
 router.get("/:id", async (req, res) => {
