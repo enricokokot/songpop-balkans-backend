@@ -1,11 +1,11 @@
 import express from "express";
-import connect from "../db.js";
+import connect from "../db";
 import fs from "fs";
 import assert from "assert";
 // import { songs } from "../songs.js";
 import { GridFSBucket } from "mongodb";
 import { resolve } from "path";
-import { ObjectId } from "mongodb";
+import mongo, { ObjectId } from "mongodb";
 
 export const router = express.Router();
 
@@ -48,10 +48,9 @@ router.post("/", async (req, res) => {
         })
         .on("finish", function () {
           console.log("File uploaded:", currentFileLocation);
-          db.collection("playlists").findOneAndUpdate(
-            { title: "Rock" },
-            { $push: { songs: result.insertedId } }
-          );
+          db.collection("playlists").findOneAndUpdate({ title: "Rock" }, {
+            $push: { songs: result.insertedId },
+          } as unknown as mongo.PushOperator<Document>);
         });
     }
   }
@@ -85,7 +84,12 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const id = Number(req.params.id);
   let db = await connect();
-  let cursor = await db.collection("songs").findOne({ _id: ObjectId(id) });
+  let cursor = await db.collection("songs").findOne({ _id: new ObjectId(id) });
+
+  if (cursor === null) {
+    throw new Error("cursor is null!");
+  }
+
   let results = await cursor.toArray();
   res.json(results);
 });
@@ -96,7 +100,12 @@ router.get("/:id/audio", async (req, res) => {
   let bucket = new GridFSBucket(db);
   let specificSong = await db
     .collection("songs")
-    .findOne({ _id: ObjectId(id) });
+    .findOne({ _id: new ObjectId(id) });
+
+  if (specificSong === null) {
+    throw new Error("specificSong is null!");
+  }
+
   if (specificSong.file) {
     const songAudioName = specificSong.file;
     bucket

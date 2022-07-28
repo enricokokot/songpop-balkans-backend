@@ -1,7 +1,7 @@
 import express from "express";
-import { ObjectId } from "mongodb";
-import connect, { userDb } from "../db.js";
-import auth from "../auth.js";
+import { ObjectId, PullOperator } from "mongodb";
+import connect, { userDb } from "../db";
+import auth from "../auth";
 
 export const router = express.Router();
 
@@ -11,7 +11,7 @@ router.post("/", async (req, res) => {
   try {
     id = await auth.registerUser(user);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: e });
   }
   res.json({ id: id });
 });
@@ -29,11 +29,16 @@ router.get("/:id/ordered", async (req, res) => {
   const username = req.query.username;
   const limit = 6;
   const db = await connect();
-  const user = await db.collection(userDb).findOne({ _id: ObjectId(id) });
+  const user = await db.collection(userDb).findOne({ _id: new ObjectId(id) });
+
+  if (user === null) {
+    throw new Error("user is null!");
+  }
+
   const { reply, challenge, waiting } = user;
-  const idsSmallerThanUser = [];
-  const idsLargerThanUser = [];
-  challenge.forEach((userId) =>
+  const idsSmallerThanUser = [] as string[];
+  const idsLargerThanUser = [] as string[];
+  challenge.forEach((userId: ObjectId) =>
     userId.toString() > id
       ? idsLargerThanUser.push(userId.toString())
       : idsSmallerThanUser.push(userId.toString())
@@ -77,12 +82,17 @@ router.get("/:id/ordered", async (req, res) => {
     return a.sum < b.sum ? 1 : b.sum < a.sum ? -1 : 0;
   });
 
-  const newChallenge = idsAndSums.map((idAndSum) => ObjectId(idAndSum.id));
+  const newChallenge = idsAndSums.map((idAndSum) => new ObjectId(idAndSum.id));
 
   const users = reply.concat(newChallenge).concat(waiting);
   const results = [];
   for (const user of users) {
     const wholeUser = await db.collection(userDb).findOne({ _id: user });
+
+    if (wholeUser === null) {
+      throw new Error("wholeUser is null!");
+    }
+
     if (wholeUser.username.includes(username)) results.push(wholeUser);
   }
   const filteredResults = results.filter((user) =>
@@ -99,7 +109,9 @@ router.get("/:id/ordered", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
-  let specificUser = await db.collection(userDb).findOne({ _id: ObjectId(id) });
+  let specificUser = await db
+    .collection(userDb)
+    .findOne({ _id: new ObjectId(id) });
   res.json(specificUser);
 });
 
@@ -108,22 +120,36 @@ router.delete("/:id", async (req, res) => {
   const db = await connect();
   const specificUser = await db
     .collection(userDb)
-    .findOne({ _id: ObjectId(id) });
+    .findOne({ _id: new ObjectId(id) });
+
+  if (specificUser === null) {
+    throw new Error("specificUser is null!");
+  }
+
   const { _id, duels, reply, challenge, waiting } = specificUser;
   for (const userId of reply) {
     await db
       .collection("users")
-      .findOneAndUpdate({ _id: userId }, { $pull: { waiting: _id } });
+      .findOneAndUpdate(
+        { _id: userId },
+        { $pull: { waiting: _id } as unknown as PullOperator<Document> }
+      );
   }
   for (const userId of challenge) {
     await db
       .collection("users")
-      .findOneAndUpdate({ _id: userId }, { $pull: { challenge: _id } });
+      .findOneAndUpdate(
+        { _id: userId },
+        { $pull: { challenge: _id } as unknown as PullOperator<Document> }
+      );
   }
   for (const userId of waiting) {
     await db
       .collection("users")
-      .findOneAndUpdate({ _id: userId }, { $pull: { reply: _id } });
+      .findOneAndUpdate(
+        { _id: userId },
+        { $pull: { reply: _id } as unknown as PullOperator<Document> }
+      );
   }
   for (const duelId of duels) {
     const specificDuel = await db.collection("duels").findOne({ _id: duelId });
@@ -131,8 +157,8 @@ router.delete("/:id", async (req, res) => {
       const { playerOneId, playerTwoId } = specificDuel;
       const otherPlayerId =
         playerOneId === _id.toString()
-          ? ObjectId(playerTwoId)
-          : ObjectId(playerOneId);
+          ? new ObjectId(playerTwoId)
+          : new ObjectId(playerOneId);
       console.log("otherPlayerId", otherPlayerId);
       await db
         .collection("users")
@@ -150,7 +176,14 @@ router.delete("/:id", async (req, res) => {
 router.get("/:id/coin", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
-  let specificUser = await db.collection(userDb).findOne({ _id: ObjectId(id) });
+  let specificUser = await db
+    .collection(userDb)
+    .findOne({ _id: new ObjectId(id) });
+
+  if (specificUser === null) {
+    throw new Error("specificUser is null!");
+  }
+
   const specificUserCoin = specificUser.coins;
   res.status(200);
   res.send({ availableCoins: specificUserCoin });
@@ -159,7 +192,14 @@ router.get("/:id/coin", async (req, res) => {
 router.get("/:id/playlist", async (req, res) => {
   const id = req.params.id;
   let db = await connect();
-  let specificUser = await db.collection(userDb).findOne({ _id: ObjectId(id) });
+  let specificUser = await db
+    .collection(userDb)
+    .findOne({ _id: new ObjectId(id) });
+
+  if (specificUser === null) {
+    throw new Error("specificUser is null!");
+  }
+
   const specificUserPlaylists = specificUser.playlists;
   res.status(200);
   res.send(specificUserPlaylists);
@@ -171,7 +211,12 @@ router.get("/:id/achievement", async (req, res) => {
     let db = await connect();
     let specificUser = await db
       .collection(userDb)
-      .findOne({ _id: ObjectId(id) });
+      .findOne({ _id: new ObjectId(id) });
+
+    if (specificUser === null) {
+      throw new Error("specificUser is null!");
+    }
+
     const specificUserAchievements = specificUser.achievements;
     res.status(200);
     res.send(specificUserAchievements);
@@ -186,20 +231,25 @@ router.put("/:userId/achievement/:achievementId", async (req, res) => {
   const db = await connect();
   const specificUser = await db
     .collection(userDb)
-    .findOne({ _id: ObjectId(userId) });
+    .findOne({ _id: new ObjectId(userId) });
+
+  if (specificUser === null) {
+    throw new Error("specificUser is null!");
+  }
+
   const { appendedAchievement } = await specificUser;
   if (appendedAchievement === Number(achievementId)) {
     await db
       .collection(userDb)
       .findOneAndUpdate(
-        { _id: ObjectId(userId) },
+        { _id: new ObjectId(userId) },
         { $set: { appendedAchievement: -1 } }
       );
   } else {
     await db
       .collection(userDb)
       .findOneAndUpdate(
-        { _id: ObjectId(userId) },
+        { _id: new ObjectId(userId) },
         { $set: { appendedAchievement: Number(achievementId) } }
       );
   }
@@ -213,10 +263,20 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
   let db = await connect();
   let specificUser = await db
     .collection(userDb)
-    .findOne({ _id: ObjectId(userId) });
+    .findOne({ _id: new ObjectId(userId) });
+
+  if (specificUser === null) {
+    throw new Error("specificUser is null!");
+  }
+
   const specificUserAchievements = specificUser.achievements;
   const specificUserAchievement = specificUserAchievements.find(
-    (achievement) => achievement.id === achievementId
+    (achievement: {
+      id: number;
+      mission: string;
+      progress: number;
+      total: number;
+    }) => achievement.id === achievementId
   );
   if (specificUserAchievement.progress < specificUserAchievement.total) {
     let achievementAchieved = false;
@@ -224,12 +284,17 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
       let achievementAction = await db
         .collection(userDb)
         .updateOne(
-          { _id: ObjectId(userId) },
+          { _id: new ObjectId(userId) },
           { $inc: { "achievements.0.progress": 1 } }
         );
       let achievementAction2 = await db
         .collection(userDb)
-        .findOne({ _id: ObjectId(userId) });
+        .findOne({ _id: new ObjectId(userId) });
+
+      if (achievementAction2 === null) {
+        throw new Error("achievementAction2 is null!");
+      }
+
       if (
         achievementAction2.achievements[0].progress ===
         achievementAction2.achievements[0].total
@@ -239,12 +304,17 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
       let achievementAction = await db
         .collection(userDb)
         .updateOne(
-          { _id: ObjectId(userId) },
+          { _id: new ObjectId(userId) },
           { $inc: { "achievements.1.progress": 1 } }
         );
       let achievementAction2 = await db
         .collection(userDb)
-        .findOne({ _id: ObjectId(userId) });
+        .findOne({ _id: new ObjectId(userId) });
+
+      if (achievementAction2 === null) {
+        throw new Error("achievementAction2 is null!");
+      }
+
       if (
         achievementAction2.achievements[1].progress ===
         achievementAction2.achievements[1].total
@@ -254,12 +324,17 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
       let achievementAction = await db
         .collection(userDb)
         .updateOne(
-          { _id: ObjectId(userId) },
+          { _id: new ObjectId(userId) },
           { $inc: { "achievements.2.progress": 1 } }
         );
       let achievementAction2 = await db
         .collection(userDb)
-        .findOne({ _id: ObjectId(userId) });
+        .findOne({ _id: new ObjectId(userId) });
+
+      if (achievementAction2 === null) {
+        throw new Error("achievementAction2 is null!");
+      }
+
       if (
         achievementAction2.achievements[2].progress ===
         achievementAction2.achievements[2].total
@@ -269,12 +344,17 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
       let achievementAction = await db
         .collection(userDb)
         .updateOne(
-          { _id: ObjectId(userId) },
+          { _id: new ObjectId(userId) },
           { $inc: { "achievements.3.progress": 1 } }
         );
       let achievementAction2 = await db
         .collection(userDb)
-        .findOne({ _id: ObjectId(userId) });
+        .findOne({ _id: new ObjectId(userId) });
+
+      if (achievementAction2 === null) {
+        throw new Error("achievementAction2 is null!");
+      }
+
       if (
         achievementAction2.achievements[3].progress ===
         achievementAction2.achievements[3].total
@@ -284,12 +364,17 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
       let achievementAction = await db
         .collection(userDb)
         .updateOne(
-          { _id: ObjectId(userId) },
+          { _id: new ObjectId(userId) },
           { $inc: { "achievements.4.progress": 1 } }
         );
       let achievementAction2 = await db
         .collection(userDb)
-        .findOne({ _id: ObjectId(userId) });
+        .findOne({ _id: new ObjectId(userId) });
+
+      if (achievementAction2 === null) {
+        throw new Error("achievementAction2 is null!");
+      }
+
       if (
         achievementAction2.achievements[4].progress ===
         achievementAction2.achievements[4].total
@@ -299,12 +384,17 @@ router.patch("/:userId/achievement/:achievementId", async (req, res) => {
       let achievementAction = await db
         .collection(userDb)
         .updateOne(
-          { _id: ObjectId(userId) },
+          { _id: new ObjectId(userId) },
           { $inc: { "achievements.5.progress": 1 } }
         );
       let achievementAction2 = await db
         .collection(userDb)
-        .findOne({ _id: ObjectId(userId) });
+        .findOne({ _id: new ObjectId(userId) });
+
+      if (achievementAction2 === null) {
+        throw new Error("achievementAction2 is null!");
+      }
+
       if (
         achievementAction2.achievements[5].progress ===
         achievementAction2.achievements[5].total

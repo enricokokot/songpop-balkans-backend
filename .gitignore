@@ -136,3 +136,6 @@ assets/clips/
 
 # mongo
 dump
+
+# typescript
+build

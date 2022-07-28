@@ -1,5 +1,5 @@
 import express from "express";
-import connect, { userDb } from "../db.js";
+import connect, { userDb } from "../db";
 import { ObjectId } from "mongodb";
 
 export const router = express.Router();
@@ -12,9 +12,11 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const id = Number(req.params.id);
+  const id = req.params.id;
   let db = await connect();
-  const specificPlaylist = await db.collection("playlists").findOne({ id: id });
+  const specificPlaylist = await db
+    .collection("playlists")
+    .findOne({ _id: new ObjectId(id) });
   res.status(200);
   res.send(specificPlaylist);
 });
@@ -25,10 +27,18 @@ router.put("/buy", async (req, res) => {
   let db = await connect();
   let playerIndex = await db
     .collection(userDb)
-    .findOne({ _id: ObjectId(playerId) });
+    .findOne({ _id: new ObjectId(playerId) });
   const thePlaylist = await db
     .collection("playlists")
     .findOne({ title: playlistTitle });
+
+  if (playerIndex === null) {
+    throw new Error("playerIndex is null!");
+  }
+
+  if (thePlaylist === null) {
+    throw new Error("thePlaylist is null!");
+  }
 
   if (playerIndex.coins >= thePlaylist.price) {
     let playlistPrice = thePlaylist.price;
@@ -36,13 +46,13 @@ router.put("/buy", async (req, res) => {
     let buy1 = await db
       .collection(userDb)
       .updateOne(
-        { _id: ObjectId(playerId) },
+        { _id: new ObjectId(playerId) },
         { $inc: { coins: -playlistPrice } }
       );
     let buy2 = await db
       .collection(userDb)
       .updateOne(
-        { _id: ObjectId(playerId) },
+        { _id: new ObjectId(playerId) },
         { $push: { playlists: playlistTitle } }
       );
     res.status(200);
@@ -59,6 +69,11 @@ router.get("/:id/game", async (req, res) => {
   let thePlaylist = await db
     .collection("playlists")
     .findOne({ title: playlistId });
+
+  if (thePlaylist === null) {
+    throw new Error("thePlaylist is null!");
+  }
+
   const playlistSongsMixed = thePlaylist.songs;
 
   const roundTypes = ["artist", "title"];
@@ -93,12 +108,22 @@ router.get("/:id/game", async (req, res) => {
         if (firstRoundType === "title") {
           let theSong = await db
             .collection("songs")
-            .findOne({ _id: ObjectId(songId) });
+            .findOne({ _id: new ObjectId(songId) });
+
+          if (theSong === null) {
+            throw new Error("theSong is null!");
+          }
+
           return theSong.title;
         } else {
           let theSong = await db
             .collection("songs")
-            .findOne({ _id: ObjectId(songId) });
+            .findOne({ _id: new ObjectId(songId) });
+
+          if (theSong === null) {
+            throw new Error("theSong is null!");
+          }
+
           return theSong.artist;
         }
       })
@@ -109,12 +134,22 @@ router.get("/:id/game", async (req, res) => {
         if (secondRoundType === "title") {
           let theSong = await db
             .collection("songs")
-            .findOne({ _id: ObjectId(songId) });
+            .findOne({ _id: new ObjectId(songId) });
+
+          if (theSong === null) {
+            throw new Error("theSong is null!");
+          }
+
           return theSong.title;
         } else {
           let theSong = await db
             .collection("songs")
-            .findOne({ _id: ObjectId(songId) });
+            .findOne({ _id: new ObjectId(songId) });
+
+          if (theSong === null) {
+            throw new Error("theSong is null!");
+          }
+
           return theSong.artist;
         }
       })
@@ -125,12 +160,22 @@ router.get("/:id/game", async (req, res) => {
         if (thirdRoundType === "title") {
           let theSong = await db
             .collection("songs")
-            .findOne({ _id: ObjectId(songId) });
+            .findOne({ _id: new ObjectId(songId) });
+
+          if (theSong === null) {
+            throw new Error("theSong is null!");
+          }
+
           return theSong.title;
         } else {
           let theSong = await db
             .collection("songs")
-            .findOne({ _id: ObjectId(songId) });
+            .findOne({ _id: new ObjectId(songId) });
+
+          if (theSong === null) {
+            throw new Error("theSong is null!");
+          }
+
           return theSong.artist;
         }
       })
@@ -160,13 +205,23 @@ router.get("/:id/game", async (req, res) => {
 
   const firstRoundCorrectAnswerObject = await db
     .collection("songs")
-    .findOne({ _id: ObjectId(firstRoundCorrectAnswer) });
+    .findOne({ _id: new ObjectId(firstRoundCorrectAnswer) });
   const secondRoundCorrectAnswerObject = await db
     .collection("songs")
-    .findOne({ _id: ObjectId(secondRoundCorrectAnswer) });
+    .findOne({ _id: new ObjectId(secondRoundCorrectAnswer) });
   const thirdRoundCorrectAnswerObject = await db
     .collection("songs")
-    .findOne({ _id: ObjectId(thirdRoundCorrectAnswer) });
+    .findOne({ _id: new ObjectId(thirdRoundCorrectAnswer) });
+
+  if (firstRoundCorrectAnswerObject === null) {
+    throw new Error("firstRoundCorrectAnswerObject is null!");
+  }
+  if (secondRoundCorrectAnswerObject === null) {
+    throw new Error("secondRoundCorrectAnswerObject is null!");
+  }
+  if (thirdRoundCorrectAnswerObject === null) {
+    throw new Error("thirdRoundCorrectAnswerObject is null!");
+  }
 
   const firstRoundCorrectAnswerString = await firstRoundCorrectAnswerObject[
     firstRoundType
@@ -200,7 +255,7 @@ router.get("/:id/game", async (req, res) => {
   };
 
   res.status(200);
-  res.send({ transactionCompleted: true, roundsData, playlistId });
+  res.send({ roundsData, playlistId });
 });
 
 // zamjena bazičnih id-eva u listi pjesama playliste sa
@@ -216,7 +271,10 @@ router.put("/", async (req, res) => {
         const songId = songDetails._id;
         const changedSong = await db
           .collection("playlists")
-          .update({ title: playlist.title }, { $addToSet: { songs: songId } });
+          .updateOne(
+            { title: playlist.title },
+            { $addToSet: { songs: songId } }
+          );
       }
     }
   }

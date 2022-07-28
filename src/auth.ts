@@ -1,24 +1,29 @@
-import connect, { userDb } from "./db.js";
+import connect, { userDb } from "./db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { Db, ObjectId, PushOperator } from "mongodb";
 
 (async () => {
-  let db = await connect();
+  const db = await connect();
   await db.collection(userDb).createIndex({ username: 1 }, { unique: true });
 })();
 
 export default {
-  async registerUser(userData) {
-    let db = await connect();
-    let doc = {
+  async registerUser(userData: {
+    username: string;
+    password: string;
+    playlist: string;
+  }) {
+    const db = (await connect()) as Db;
+    const doc = {
       username: userData.username,
       password: await bcrypt.hash(userData.password, 8),
       playlists: [userData.playlist],
-      friends: [],
-      duels: [],
-      reply: [],
-      challenge: [],
-      waiting: [],
+      friends: [] as string[],
+      duels: [] as string[],
+      reply: [] as ObjectId[],
+      challenge: [] as ObjectId[],
+      waiting: [] as ObjectId[],
       coins: 0,
       "games played": 0,
       "games won": 0,
@@ -59,33 +64,35 @@ export default {
       ],
     };
 
-    let cursor = await db.collection(userDb).find();
-    cursor = await cursor.toArray();
-    doc.challenge = cursor.map((user) => user._id);
+    const cursor = await db.collection(userDb).find();
+    const result = await cursor.toArray();
+    doc.challenge = result.map((user) => user._id);
 
     try {
-      let result = await db.collection(userDb).insertOne(doc);
+      const result = await db.collection(userDb).insertOne(doc);
       if (result && result.insertedId) {
-        await db
-          .collection(userDb)
-          .updateMany(
-            { _id: { $ne: result.insertedId } },
-            { $push: { challenge: result.insertedId } }
-          );
+        await db.collection(userDb).updateMany(
+          { _id: { $ne: result.insertedId } },
+          {
+            $push: {
+              challenge: result.insertedId,
+            } as unknown as PushOperator<Document>,
+          }
+        );
       }
       return result.insertedId;
     } catch (e) {
       // might be cause of subsequent errors after this one
-      if (e.code == 11000) {
-        throw new Error("User already exists");
-      }
+      // if (e.code == 11000) {
+      //   throw new Error("User already exists");
+      // }
       console.error(e);
     }
   },
 
-  async authenticateUser(username, password) {
-    let db = await connect();
-    let user = await db.collection(userDb).findOne({ username: username });
+  async authenticateUser(username: string, password: string) {
+    const db: Db = (await connect()) as Db;
+    const user = await db.collection(userDb).findOne({ username: username });
 
     if (
       user &&
@@ -93,7 +100,10 @@ export default {
       (await bcrypt.compare(password, user.password))
     ) {
       delete user.password;
-      let token = jwt.sign(user, process.env.JWT_SECRET, {
+      if (typeof process.env.JWT_SECRET !== "string") {
+        throw new Error("JWT_SECRET is missing!");
+      }
+      const token = jwt.sign(user, process.env.JWT_SECRET, {
         algorithm: "HS512",
         expiresIn: "1 week",
       });
